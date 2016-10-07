@@ -1,0 +1,34 @@
+/* Glyphicons in table */
+table tr .glyphicon {
+  color: #3399f3;
+}
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+  color: #000;
+}
+/* Panels background under body field in comments */
+.node-type-ol-todo .panel,
+.node-type-ol-message .panel {
+  background-color: #f5f5f5;
+  border: 0;
+}
+/* Break field to under content */
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+/* Table odd rows background white */
+.view-messages-in-a-group tr.odd,
+.view-all-todo-lists-in-a-group tr.odd,
+.view-todos-on-todo-list-page tr.odd {
+  background-color: #f9f9f9;
+}
+.front a:hover {
+  color: #000;
+}

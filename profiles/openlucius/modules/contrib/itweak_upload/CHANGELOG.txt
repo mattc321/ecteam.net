@@ -1,0 +1,6 @@
+itweak_upload 7.x-3.x-dev
+-------------------------
+[NOISSUE] Started implementation of v3.0 for Drupal 7
+[NOISSUE] New filefield formatter implementation for Drupal 7
+[NOISSUE] Removed Thickbox integration code as Thickbox will not be converted to D7
+

@@ -1,0 +1,13 @@
+diff --git a/includes/bootstrap.inc b/includes/bootstrap.inc
+index 744fc8f..14085f6 100644
+--- a/includes/bootstrap.inc
++++ b/includes/bootstrap.inc
+@@ -861,7 +861,7 @@ function drupal_get_filename($type, $name, $filename = NULL) {
+     try {
+       if (function_exists('db_query')) {
+         $file = db_query("SELECT filename FROM {system} WHERE name = :name AND type = :type", array(':name' => $name, ':type' => $type))->fetchField();
+-        if ($file !== FALSE && file_exists(DRUPAL_ROOT . '/' . $file)) {
++        if (file_exists(DRUPAL_ROOT . '/' . $file)) {
+           $files[$type][$name] = $file;
+         }
+       }

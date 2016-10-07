@@ -1,0 +1,75 @@
+/* Front page badge (circle) color */
+.btn-default .badge {
+  background-color: #4582ec;
+}
+/* Blue color */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+table th,
+table th a,
+table tr .glyphicon {
+  color: #4582ec;
+}
+/* Search bar in navbar */
+#search-block-form {
+  margin-top: 8px;
+}
+/* Search bar in navbar */
+.ui-autocomplete-input,
+.input-group-btn .btn-default {
+  height: 35px !important;
+}
+/* Regular textfields */
+input[type="text"] {
+  height: 35px !important;
+  max-height: 35px !important;
+}
+/* Comments */
+html .front .view-groups h4,
+.ol-content-textdoc ul,
+/* Agenda item title */
+html .front .view-groups h4,
+html .front .view-groups a:hover,
+.calendar-calendar .field-content a,
+.node-type-ol-text-document .region-content.well,
+.front a:hover,
+.node-type-ol-text-document #comments h2 {
+  color: #000 !important;
+}
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+  color: #000;
+}
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+.node-type-ol-message .field-type-file .panel-body,
+.node-type-ol-message .notifies,
+.node-type-ol-message .notifies .panel-body,
+.node-type-ol-message .notifies .panel-body .panel-default,
+.node-type-ol-message .field-name-field-shared-loopin-email,
+.node-type-ol-todo .field-type-file .panel-body,
+.node-type-ol-todo .notifies,
+.node-type-ol-todo .notifies .panel-body,
+.node-type-ol-todo .notifies .panel-body .panel-default,
+.node-type-ol-todo .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  background-color: #f7f7f7;
+}

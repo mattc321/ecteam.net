@@ -1,0 +1,1984 @@
+body.admin-menu {
+  padding-top: 5px;
+}
+html body.admin-menu .navbar-fixed-top {
+  top: 30px;
+}
+.navbar-fixed-top {
+  z-index: 1035;
+}
+/** fix for navbar ipad behaviour */
+.fixfixed .navbar-fixed-top,
+.fixfixed .navbar-fixed-bottom {
+  position: absolute;
+}
+.content th {
+  font-weight: normal;
+}
+.form-type-textarea label,
+#heartbeat-stream-tweet_siteactivity blockquote p,
+#heartbeat-stream-useractivity blockquote p {
+  display: none;
+}
+.field-name-field-user-about-me label {
+  display: block;
+}
+.page-all-messages .page-header .glyphicon,
+.node-type-ol-message .page-header .glyphicon,
+.page-group-messages .page-header .glyphicon {
+  top: 3px;
+}
+.navbar-collapse .secondary .dropdown-menu .last a {
+  font-size: 13px;
+  padding: 12px 15px;
+}
+blockquote {
+  font-size: 15px;
+}
+#admin-menu-wrapper {
+  padding: 6px 10px 0 5px;
+}
+h5 {
+  text-align: left;
+}
+.views-field-last-updated,
+.views-field-comment-count {
+  font-size: 9px;
+}
+.views-field-delta,
+.views-field-created,
+.views-field-field-todo-attachments,
+.views-field-access {
+  font-size: 10px;
+}
+li.views-fluid-grid-item p,
+li.views-fluid-grid-item li {
+  font-size: 12px;
+}
+li.views-fluid-grid-item .views-field-title,
+li.views-fluid-grid-item .views-field-body {
+  margin-bottom: 15px;
+}
+li.views-fluid-grid-item .views-field-body p {
+  width: 100%;
+  word-wrap: break-word;
+}
+.page-header {
+  margin-bottom: 15px;
+  border-bottom: 0px;
+}
+.region-content .field-name-field-shared-show-clients {
+  margin-bottom: 15px;
+}
+.region-content {
+  position: relative;
+  min-height: 1000px !important;
+  overflow: hidden;
+}
+.front .view-id-groups .view-content {
+  float: left;
+}
+.page-companies-teams .view-header,
+.view-actionlink {
+  float: right;
+  margin-top: -13px;
+}
+.view-actionlink {
+  margin-left: 10px;
+}
+.view-actionlinks,
+.view-blocked_users,
+.view-all_users {
+  float: right;
+  margin-top: -40px;
+  margin-right: 10px;
+}
+.ol-detailpage-nopicture {
+  font-size: 46px;
+}
+/*
+ * Work around for not showing 'publish button' from
+ * that module on node/add page
+ *
+ */
+.page-node #edit-publish {
+  display: none;
+}
+.page-node .node-ol_todo_list-form #edit-publish {
+  display: inline;
+}
+.field-collection-container .field-items .field-item {
+  margin: 20px;
+}
+.field-type-taxonomy-term-reference .field-items .field-item {
+  margin: 0;
+}
+.navbar-nav.secondary > li.last > .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+.navbar-nav.secondary {
+  float: right !important;
+}
+/*
+ * Less is more,
+hide unnecessary text for now with css in future
+ * maybe some some form_alters will be better
+ */
+
+/* @FIXME: me thinks this aint gonna
+ * work when OpenLucius goes i18nizzle ==> some
+ * form_alter needed */
+.field-name-field-shared-files .help-block,
+#edit-body-und-0-value_path_row,
+#edit-comment-body-und-0-value_path_row,
+.region-content label[for*=edit-comment-body-],
+.region-content label[for*=edit-body-],
+.region-content label[for*=edit-title],
+.region-content label[for*=edit-field-shared-files-] {
+  display: none;
+}
+.region-sidebar-second h2 {
+  font-size: 16px;
+}
+.region-sidebar-second {
+  overflow: hidden;
+}
+.region-content .views-exposed-widget .btn {
+  width: 135px;
+  height: 33px;
+  padding: 5px 10px;
+  font-size: 12px;
+  margin: 0px;
+}
+/**
+ * 'Crumbs'
+ */
+.field-name-field-todo-description {
+  margin-top: 15px;
+}
+#page-header .field-type-node-reference a {
+  margin-right: 2px;
+  line-height: 1.428571429;
+  border-radius: 0;
+  position: relative;
+  display: block;
+  padding: 10px 15px;
+  font-size: 14px;
+  border-bottom-color: transparent !important;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #ddd;
+}
+/**
+ * Group detail page
+ */
+#block-fieldblock-node-ol-group-default-body {
+  margin-top: 20px;
+}
+.view-id-files_in_group_dashboard h2 {
+  font-size: 20px;
+  margin-left: 15px;
+  margin-top: 5px;
+}
+.view-text-documents-in-a-group li.views-fluid-grid-item,
+.view-id-groups li.views-fluid-grid-item {
+  padding: 15px;
+}
+.ol_group-detailpage {
+  margin-top: 20px;
+}
+.view-id-messages_in_a_group .glyphicon-user {
+  font-size: 26px;
+}
+.node-type-ol-group .views-field-last-updated,
+.page-group-textdocuments .views-field-last-updated,
+.page-all-text-documents .views-field-last-updated {
+  margin-top: 20px;
+}
+.node-type-ol-group #block-openlucius_core-ol-group-heading .block-title {
+  display: none;
+}
+/**
+ * Todo tables
+ */
+
+#views-form-todos-on-todo-list-page-block {
+  padding-top: 23px;
+}
+.tabledrag-toggle-weight-wrapper {
+  display: none;
+}
+a.tabledrag-handle .handle {
+  font-size: 10px;
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'Glyphicons Halflings';
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+}
+a.tabledrag-handle .handle:before {
+  content: "\e068";
+}
+.view-id-all_todo_lists_in_a_group td.views-field.views-field-title,
+.view-id-todos_in_group_dashboard td.views-field.views-field-title,
+.node-type-ol-todo-list .views-field-title {
+  width: 28%;
+}
+.view-id-all_todo_lists_in_a_group td.views-field-comment-count,
+.view-id-todos_in_group_dashboard td.views-field-comment-count {
+  width: 5%;
+}
+.view-id-all_todo_lists_in_a_group td.views-field-field-todo-user-reference,
+.view-id-todos_in_group_dashboard td.views-field-field-todo-user-reference {
+  width: 13%;
+}
+.view-id-all_todo_lists_in_a_group td.views-field-field-todo-due-date,
+.view-id-todos_in_group_dashboard td.views-field-field-todo-due-date {
+  width: 13%;
+}
+.view-id-all_todo_lists_in_a_group td.views-field-last-updated,
+.view-id-todos_in_group_dashboard td.views-field-last-updated {
+  width: 13%;
+}
+.view-id-all_todo_lists_in_a_group td.views-field-field-todo-label,
+.view-id-todos_in_group_dashboard td.views-field-field-todo-label {
+  width: 15%;
+}
+.view-id-messages_in_a_group .views-field-title,
+.page-user-dashboard #block-views-messages-in-a-group-block-2 .views-field-title {
+  width: 20%;
+}
+.views-field-field-user-phone {
+  min-width: 120px;
+}
+/**
+ * Todo page
+ *
+ */
+.field-name-field-todo-description {
+  margin-top: 15px;
+}
+/**
+ * MESSAGES
+ *
+ */
+.page-all-messages .views-field-created {
+  width: 15%;
+}
+.node-type-ol-group .view-header {
+  font-size: 11px;
+}
+.page-group-messages .views-field-created {
+  width: 10%;
+}
+/**
+ * SEARCH PAGE
+ *
+ */
+
+.page-search-content .region-sidebar-first h2 {
+  font-size: 17px;
+}
+.page-search-content .region-sidebar-first ul {
+  padding-left: 0px;
+}
+.page-search-content .region-sidebar-first li {
+  padding-bottom: 5px;
+}
+.page-search-content .region-sidebar-first,
+.page-search-content .region-sidebar-first a {
+  font-size: 13px;
+}
+.navbar #block-search-form {
+  max-width: 250px;
+  margin: 5px 0 0 0;
+  float: left;
+  z-index: 9999;
+}
+/* Front page */
+.node-type-ol-group .block-title a,
+.page-user-dashboard .block-title {
+  font-size: 28px;
+}
+.block-title .btn-default,
+.btn-openlucius {
+  border-radius: 5px;
+  padding: 2px 10px;
+}
+#block-views-todos-in-group-dashboard-block {
+  margin-bottom: 50px;
+}
+/* Text documents */
+.view-id-text_documents_in_a_group .views-field-field-textdocument-body {
+  font-size: 12px;
+}
+.view-text-documents-in-a-group .views-fluid-grid-item,
+.node-type-ol-text-document .region-content {
+  background-image: url('../images/ol_paper.jpg');
+  border: 1px solid #cfcfcf;
+  border-right: 1px solid #b7b7b7;
+  border-left: 1px solid #b7b7b7;
+  background-color: #fff6d5;
+}
+.view-text-documents-in-a-group .views-field-comment-count,
+.view-text-documents-in-a-group .views-field-last-updated,
+.view-text-documents-in-a-group .views-field-last-updated a {
+  font-size: 10px;
+}
+.node-type-ol-text-document .region-sidebar-second button {
+  padding: 20px 10px;
+  margin-bottom: 10px;
+}
+/* Text documents button */
+.node-type-ol-text-document .region-content {
+  border: 1px solid #cfcfcf;
+  border-right: 1px solid #b7b7b7;
+  border-left: 1px solid #b7b7b7;
+  -webkit-box-shadow: 2px 2px 2px #ccc;
+  box-shadow: 2px 2px 2px #ccc;
+  padding-top: 50px;
+}
+.textdoc_latest {
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #69758a;
+}
+.textdoc_back {
+  border-bottom: dotted #ccc 2px;
+}
+.textdoc_infowrapper,
+.textdoc_index {
+  border-bottom: dotted #ccc 2px;
+}
+.textdoc_backlink {
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #69758a;
+}
+#block-fieldblock-node-ol-text-document-default-field-shared-show-clients h2,
+#block-diff-inline h2 {
+  font-size: 16px;
+}
+.page-node .ol-content-textdoc {
+  margin-right: 10px;
+}
+.node-ol-text-document .field-name-field-shared-show-clients {
+  margin-top: -25px;
+  margin-bottom: 25px;
+}
+.textdoc_info {
+  font-size: 11px;
+  margin-bottom: 15px;
+}
+.textdoc_latest {
+  font-size: 12px;
+  padding: 7px 20px;
+  white-space: nowrap;
+}
+ul.views-fluid-grid-items-h-margin-10px li.views-fluid-grid-item {
+  margin-left: 5px;
+}
+.textdoc_back {
+  margin-bottom: 20px;
+  padding-bottom: 25px;
+}
+.textdoc_latestblock {
+  padding-bottom: 25px;
+}
+.textdoc_infowrapper,
+.textdoc_index {
+  padding-bottom: 10px;
+}
+div.indentation {
+  float: left;
+  height: 1.7em;
+  margin: -0.4em 0.2em -0.4em -0.4em;
+  padding: 0.42em 0 0.42em 0.6em;
+  width: 10px;
+  color: #ccc;
+}
+.textdoc_backlink {
+  font-size: 12px;
+  padding: 7px 20px;
+  white-space: nowrap;
+}
+.region-sidebar-second .view-text-documents-in-a-group {
+  margin-top: 25px;
+}
+.region-sidebar-second .active,
+.region-sidebar-first .active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+/* nasty for now,
+@FIXME later */
+.region-sidebar-second .view-text-documents-in-a-group .view-actionlink {
+  display: none;
+}
+.region-sidebar-second .view-text-documents-in-a-group td {
+  padding: 5px 0 5px 0px;
+}
+.region-sidebar-second .view-text-documents-in-a-group div.indentation {
+  width: 8px;
+  margin-left: 0;
+}
+#block-views-a5ed397cfeebc6da17ea7491e5232a30 {
+  margin-top: -15px;
+}
+.region-sidebar-second .view-text-documents-in-a-group .glyphicon,
+.region-sidebar-second .view-text-documents-in-a-group .views-field-comment-count {
+  font-size: 9px;
+}
+.page-group-textdocuments .region-sidebar-second a.tabledrag-handle .handle {
+  padding: 0;
+}
+.node-type-ol-text-document #block-diff-inline .block-title {
+  display: none;
+}
+.node-type-ol-text-document .region-sidebar-second #block-diff-inline .content {
+  margin-top: 20px;
+}
+.node-type-ol-text-document .region-sidebar-second .glyphicon-certificate,
+.page-group-textdocuments .region-sidebar-second .glyphicon-certificate {
+  margin-left: 5px;
+}
+.node-type-ol-text-document .region-sidebar-second .glyphicon-file,
+.page-group-textdocuments .region-sidebar-second .glyphicon-file {
+  margin-left: -3px;
+}
+/* Attachments */
+.field-collection-view .field-label,
+.view-files-all .views-field-field-label-s- a,
+.field-collection-view .field-items {
+  width: auto;
+  font-weight: normal;
+  font-size: 11px !important;
+  padding-bottom: 20px;
+}
+.view-files-all .views-field-title a,
+.view-files-all .views-field-subject a {
+  font-size: 12px !important;
+}
+.view-files-all .views-row {
+  margin-bottom: 20px;
+}
+.view-files-all .views-field-field-label-s- {
+  padding-bottom: 30px;
+}
+.view-id-files_all .field-content a {
+  font-size: 14px;
+}
+.itu-attachments {
+  margin: 20px 0px;
+}
+.itu-attachments td {
+  padding: 10px !important;
+}
+.view-files-all .glyphicon-user {
+  font-size: 26px;
+}
+.field-collection-container {
+  border: 0px;
+}
+/* Content nodes */
+.page-node .ol-node,
+.page-comment-reply .ol-node {
+  margin: 0 0 0 70px;
+}
+.region-content .user-picture {
+  padding-top: 5px;
+  margin-left: -5px;
+  position: absolute;
+}
+/* User edit */
+#edit-picture .user-picture {
+  position: relative;
+  margin-left: 0px;
+  padding-top: 0px;
+}
+#edit-picture .checkbox {
+  padding-left: 0px;
+}
+#edit-picture .panel-body {
+  padding-top: 0px;
+}
+.node .nav-tabs,
+.links.list-inline {
+  float: right;
+}
+.page-header {
+  margin: 0px 0 20px 15px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+/* Local tasks */
+.ol_textdoc_tabs {
+  float: right;
+  margin-top: -49px;
+  margin-right: -20px;
+}
+.region-content .ol_textdoc_tabs .nav li a {
+  font-size: 10px;
+  font-size: 12px;
+  padding: 10px 20px;
+}
+.region-content .nav li.active a {
+  display: none;
+}
+.region-content .nav li a {
+  padding: 5px;
+  font-size: 10px;
+}
+.nav-tabs,
+.links.list-inline {
+  border-bottom: 0px;
+}
+.view-id-dashboard_blocks .table {
+  background-color: #f7f7f7;
+  border: 1px solid #e0e0e0;
+  border-right: 1px solid #c4c4c4;
+  border-bottom: 1px solid #c4c4c4;
+  -webkit-box-shadow: 2px 2px 2px #ccc;
+  box-shadow: 2px 2px 2px #ccc;
+}
+/* Comments */
+#comments {
+  margin-top: 30px;
+  clear: left;
+}
+#comments .user-picture {
+  padding-top: 25px;
+  margin-left: -75px;
+  float: left;
+}
+.ol-new {
+  margin-top: 135px;
+  margin-left: -75px;
+  float: left;
+}
+.comment {
+  margin-top: 25px;
+}
+.indented {
+  margin-left: 60px;
+}
+#comments .form-item-field-todo-comm-show-clients-und {
+  padding: 10px 0px 5px 22px;
+}
+#comments .openlucius-hidden-comment .content {
+  background: #f7f7f7 !important;
+}
+.openlucius-hidden-comment table tr td {
+  background: #f7f7f7 !important;
+  border: none;
+}
+.view-id-dashboard_blocks .glyphicon-user {
+  font-size: 27px;
+}
+.field-name-field-todo-description {
+  margin-top: 15px;
+}
+.page-user-dashboard .views-field-field-user-company {
+  width: 18%;
+}
+.page-user-dashboard .views-field-field-user-teams {
+  width: 14%;
+}
+.page-user-dashboard .view-grouping {
+  margin-bottom: 20px;
+}
+.page-user-dashboard .region-content ul {
+  padding-left: 15px;
+}
+.page-user-dashboard .view-grouping-header {
+  margin-top: 30px;
+}
+.itu-attachment-thumb {
+  float: left;
+}
+.view-id-files_all ul {
+  list-style-type: none;
+  margin-left: -15px;
+}
+.view-id-files_all .views-field-subject,
+.view-id-files_all .views-field-title {
+  margin-left: -18px;
+}
+.field-name-field-todo-description {
+  margin-top: 15px;
+}
+#edit-field-files-tags-tid-wrapper,
+.field-name-field-files-tags {
+  padding: 10px;
+  font-size: 12px;
+  width: 150px;
+  margin-top: 10px;
+}
+.node-teaser #edit-field-files-tags-tid-wrapper,
+.node-teaser .field-name-field-files-tags {
+  float: right;
+}
+table.itu-attachment-list .file a {
+  font-size: 12px;
+}
+/* Todo-list detail page */
+.node-type-ol-todo-list #block-views-todos-on-todo-list-page-block {
+  padding-bottom: 40px;
+  margin-bottom: 40px;
+}
+.field-name-field-todo-description {
+  margin-top: 15px;
+}
+.block-views-todos-on-todo-list-page-block {
+  margin-bottom: 30px;
+}
+.node-ol-todo-list .comment-wrapper {
+  margin-top: 40px;
+}
+#block-views-todos-on-todo-list-page-block .view-header {
+  margin-bottom: 15px;
+}
+.view-header,
+.view-footer {
+  font-size: 11px;
+  margin-bottom: 15px;
+}
+.region-content .views-exposed-form {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+}
+.page-all-todo-lists .view-grouping {
+  margin-bottom: 30px;
+}
+.region-content .field-name-field-todo-list-reference,
+.field-name-field-todo-user-reference,
+.field-name-field-todo-label,
+.field-name-field-todo-completed,
+.field-name-field-todo-due-date-singledate,
+.field-name-field-shared-show-clients,
+.field-name-field-todo-completed-date,
+.field-name-field-todo-completed-by,
+.field-name-field-todolist-type,
+.field-name-field-todo-comm-show-clients,
+.field-name-field-todo-due-date .field-items,
+.submitted {
+  font-size: 11px;
+}
+/* All users */
+.field-name-field-todo-description {
+  margin-top: 15px;
+}
+.view-id-users_in_groups .views-field-created {
+  font-size: 10px;
+  padding-top: 10px;
+}
+.view-id-users_in_groups .glyphicon-user,
+.view-id-dashboard_blocks .views-field-picture .glyphicon-user {
+  font-size: 77px;
+}
+.view-id-users_in_groups .views-field-name {
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  line-height: 1.3;
+  color: inherit;
+  margin-top: 10.5px;
+  margin-bottom: 10.5px;
+}
+.view-id-users_in_groups ul.views-fluid-grid-items-height-200 li.views-fluid-grid-item {
+  height: 235px;
+}
+.view-id-users_in_groups ul.views-fluid-grid-items-height-200 li.views-fluid-grid-item .views-field-picture {
+  margin-bottom: 15px;
+}
+/* Calendar */
+/* @FIXME Needs work for responsiveness */
+.page-group-calendar .view-header {
+  margin-right: 80px;
+}
+.page-group-calendar .view-filters {
+  float: left;
+}
+.calendar-calendar td .views-field-field-shared-group-reference a {
+  font-weight: normal;
+}
+.calendar-calendar td .views-field-field-todo-user-reference a,
+.calendar-calendar td .views-field-field-todo-list-reference a {
+  font-weight: normal;
+}
+.page-user-calendar .calendar-calendar td .views-field-title a {
+  font-size: 12px;
+}
+/* Companies,
+teams and users */
+.page-companies-teams .views-field-name {
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 300;
+  width: 15%;
+  font-size: 16px;
+}
+.page-companies-teams .region-content ul {
+  padding-left: 20px;
+}
+#edit-notify-individual .form-type-checkbox,
+#edit-notify-company .form-type-checkbox,
+#edit-notify-team .form-type-checkbox {
+  display: inline-block;
+  float: left;
+  width: 10%;
+  min-width: 107px;
+  margin: 0 10px 0 0 !important;
+}
+#edit-notify-individual .form-type-checkbox label,
+#edit-notify-company .form-type-checkbox label,
+#edit-notify-team .form-type-checkbox label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 72px;
+  display: inline-block;
+  white-space: nowrap;
+}
+#edit-notify-individual,
+#edit-notify-company,
+#edit-notify-team {
+  clear: both;
+  float: left;
+  margin-bottom: 20px;
+}
+.form-wrapper .form-type-checkboxes > label {
+  float: left;
+  width: 100%;
+}
+#openlucius-core-add-form {
+  max-width: 275px;
+  float: right;
+  margin-top: 10px;
+}
+#openlucius-core-add-form .btn {
+  border-color: #ccc;
+  background-color: #eee;
+}
+#edit-unpublish {
+  float: right;
+}
+.views-field-field-shared-group-reference,
+.views-field-field-shared-group-reference span,
+.views-field-field-shared-group-reference a {
+  font-size: 10px !important;
+}
+/* Comment and notifications styling */
+.page-comment-reply .content .node h2 {
+  float: left;
+  clear: both;
+  width: 100%;
+  margin-top: 0px;
+}
+#edit-field-todo-list-reference,
+#edit-field-todo-user-reference,
+#edit-field-todo-label,
+#edit-field-todo-due-date-singledate {
+  float: left;
+  width: 23%;
+  margin-right: 10px;
+}
+#edit-field-todo-due-date-singledate {
+  clear: right;
+}
+.main-container #block-system-main {
+  float: left;
+  width: 100%;
+}
+.checkbox input[type="checkbox"] {
+  float: none;
+  margin: 0;
+  position: relative;
+}
+#comments {
+  margin-top: 30px;
+  padding-top: 10px;
+}
+.notifies {
+  border: 0px;
+  float: left;
+  clear: both;
+}
+.notifies > .panel-body {
+  padding: 0px;
+  float: left;
+}
+.notifies > .panel-body fieldset.inividual-fieldset {
+  width: 69%;
+  float: left;
+  margin-right: 10px;
+}
+.notifies > .panel-body fieldset.inividual-fieldset input[type=checkbox] {
+  top: -4px;
+}
+.notifies > .panel-body fieldset.team-companies {
+  width: 29%;
+  float: left;
+}
+.notifies > .panel-body fieldset.inividual-fieldset,
+.notifies > .panel-body fieldset.team-companies {
+  height: 100%;
+  margin-bottom: 0px;
+}
+fieldset#edit-field-wrapper.notifies.panel.panel-default.form-wrapper {
+  width: 100%;
+}
+.notifies .panel-body {
+  width: 100%;
+}
+.check-all,
+.uncheck-all,
+.icon-right {
+  font-size: 12px;
+  float: right;
+}
+.check-all .glyphicon,
+.uncheck-all .glyphicon {
+  margin-left: 5px;
+}
+.check-all,
+.uncheck-all {
+  cursor: pointer;
+}
+/* Tiny MCE tuning,
+less is more */
+span.mce_pastetext,
+.mceButton.mce_pastetext {
+  display: none !important;
+}
+tr.mceLast,
+.form-type-item {
+  display: none;
+}
+/* Editor button,
+disable this btn,
+so text is álways pasted as plain text. */
+a#edit-body-und-0-value_pastetext {
+  display: none;
+}
+/* Drag & drop uploads */
+.form-type-dragndrop-upload .input-group,
+.droppable {
+  width: 100%;
+}
+.droppable {
+  float: left;
+  padding: 2px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  text-align: center;
+  margin: 5px 0;
+  height: 100px;
+}
+.droppable-standard-upload {
+  min-height: 30px;
+}
+.droppable-message {
+  line-height: 40px;
+}
+.droppable-controls {
+  display: none;
+}
+#edit-field-shared-files-und-ajax-wrapper legend {
+  display: none;
+}
+#edit-field-shared-files-und {
+  margin-top: -0px;
+  border: 0px;
+}
+/* Filters */
+.region-sidebar-second .views-exposed-widget {
+  clear: both;
+}
+.region-sidebar-second .view-filters {
+  float: right;
+}
+.region-content .views-exposed-form .views-exposed-widget .form-submit {
+  margin-top: 0px;
+}
+.region-content .views-exposed-form {
+  border-bottom: 10px solid #e7e7e7;
+}
+/* File folders */
+.view-id-file_folders .glyphicon {
+  margin-right: 5px;
+}
+.region-sidebar-second .view-id-file_folders td {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.region-content label[for=edit-field-event-location-und-0-value] {
+  display: block;
+}
+.field-name-field-shared-group-reference {
+  display: none;
+}
+/* Loop-in e-mails */
+.field-add-more-submit {
+  font-size: 11px;
+  padding: 10px 20px;
+}
+.ol-content .field-name-field-shared-loopin-email,
+.ol-content-textdoc .field-name-field-shared-loopin-email,
+.notified {
+  padding: 5px 10px;
+  margin: 10px;
+  font-size: 10px;
+}
+#comments #comment-form .field-name-field-shared-loopin-email {
+  padding: 0px;
+  margin: 0px 0px 20px 0px;
+}
+.notified {
+  color: #7c7c7c;
+}
+.notified .text {
+  font-weight: bold;
+}
+.node > .content > .notified {
+  padding: 0;
+  margin: 0;
+  clear: both;
+}
+.swapfolder {
+  visibility: hidden;
+  position: absolute;
+}
+.select_holder {
+  position: relative;
+  width: 115px;
+  top: -15px;
+  height: 15px;
+  margin-right: 10px;
+  float: left;
+}
+ul.custom-select {
+  list-style-type: none;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 0px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-color: #f9f9f9;
+  z-index: 100;
+  width: 100%;
+  max-height: 10em;
+  overflow-y: scroll;
+}
+ul.custom-select li {
+  padding: 4px 10px;
+  cursor: pointer !important;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  display: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+ul.custom-select.open {
+  z-index: 101;
+  left: auto;
+  right: 0px;
+  top: 0;
+  width: 300px;
+}
+table tr:last-child ul.custom-select.open {
+  top: auto;
+  bottom: -25px;
+}
+ul.custom-select li.selected,
+ul.custom-select.open li {
+  display: block;
+}
+ul.custom-select li span {
+  position: absolute;
+  right: 5px;
+  top: 7px;
+}
+ul.custom-select li.selected span:before {
+  content: "\e114";
+}
+ul.custom-select.open li.selected span:before {
+  content: "\e113";
+}
+ul.custom-select li:hover,
+ul.custom-select li.selected {
+  background-color: #fff;
+}
+ul.custom-select li:hover {
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+ul.custom-select li.selected:hover {
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+ul.custom-select li:first-child {
+  border-top: 0px !important;
+}
+ul.custom-select li:last-child {
+  border-bottom: 0px !important;
+}
+ul.custom-select.open li.indent-1 {
+  padding-left: 18px;
+}
+ul.custom-select.open li.indent-2 {
+  padding-left: 28px;
+}
+ul.custom-select.open li.indent-3 {
+  padding-left: 38px;
+}
+ul.custom-select.open li.indent-4 {
+  padding-left: 48px;
+}
+ul.custom-select.open li.indent-5 {
+  padding-left: 58px;
+}
+ul.custom-select.open li.indent-6 {
+  padding-left: 68px;
+}
+ul.custom-select.open li.indent-7 {
+  padding-left: 78px;
+}
+/* Group-users */
+.page-group-users .glyphicon-remove {
+  font-size: 10px;
+}
+/* Sheetnodes (Heavy testing still needed before releasing) */
+/*'Removing' and tuning sheets,
+doesn't work properly and we haven't tested
+ * extensively */
+td[id*='-edittab'],
+td[id*='-sorttab'],
+td[id*='-commenttab'],
+td[id*='-namestab'],
+img[id*='-formulafunctions'] {
+  display: none !important;
+}
+div[id*='-edittools'] {
+  height: 60px;
+  margin-top: -13px;
+}
+#te_toplevel {
+  margin-top: 10px;
+}
+/* Remove publish button for adding todo list */
+.page-node-add-ol-todo-list .form-actions #edit-publish {
+  display: none;
+}
+/* View all-users edit button on top right */
+.view-id-users_in_groups ul li {
+  position: relative;
+}
+.view-id-users_in_groups ul li .views-field-edit-node a {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+/* Make the username break with dot dot dot for longer names*/
+.view-id-users_in_groups .views-field-name {
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 120px;
+}
+/* All-users */
+@media screen and (max-width: 510px) {
+  .view-id-users_in_groups .view-header {
+    margin-bottom: 50px;
+  }
+  .view-id-users_in_groups .view-actionlinks,
+  .view-blocked_users {
+    height: 70px;
+  }
+  .view-id-users_in_groups .view-actionlinks,
+  .view-blocked_users,
+  .view-all_users {
+    display: block;
+    width: 100%;
+    clear: both;
+    padding-left: 10px;
+  }
+}
+/* Media Queries */
+@media screen and (min-width: 767px) {
+  .navbar #block-search-form {
+    max-width: 130px;
+  }
+}
+@media screen and (min-width: 992px) {
+  .navbar #block-search-form {
+    max-width: 250px;
+  }
+}
+@media screen and (max-width: 767px) {
+  .navbar #block-search-form {
+    clear: both;
+    max-width: none;
+    margin: 5px 0px 10px;
+  }
+  .no-absolute {
+    margin-left: -12px;
+  }
+  html .navbar-collapse .navbar-nav .first {
+    clear: both !important;
+  }
+}
+header.navbar.container.navbar-default {
+  width: 100%;
+}
+.navbar.container {
+  max-width: inherit;
+}
+#admin-menu.admin-menu-position-fixed {
+  z-index: 9999 !important;
+}
+.navbar .logo {
+  padding: 5px 15px 0 0;
+}
+.view .date-nav-wrapper .date-prev {
+  right: 112px !important;
+}
+/* Lower the maincontainer to show the headline */
+.main-container {
+  margin-top: 62px;
+}
+/* User dashboard info baseline */
+.view-dashboard-blocks .views-table td {
+  vertical-align: top;
+}
+.form-item-roles {
+  display: none;
+}
+/* Clear the blocks */
+.page-user-dashboard .region-content .block-system {
+  clear: both;
+}
+.views-table thead th {
+  font-weight: bold;
+}
+/* Recent activity */
+.front td.views-field.views-field-picture {
+  width: 1%;
+}
+.front span.glyphicon.glyphicon-user {
+  font-size: 48px;
+}
+.front a span.small {
+  color: #bdbdbd;
+}
+.front a:hover span.small {
+  color: #ff0000;
+}
+.front .views-field-field-event-date {
+  background-color: #ebebeb;
+  color: #858585;
+  font-size: 11px;
+  width: 24%;
+}
+.front .views-field-timestamp {
+  width: 1%;
+}
+.views-field-timestamp .glyphicon-certificate {
+  color: #ff0000;
+}
+/* h2 in sidebars */
+.region-sidebar-first h2,
+.region-sidebar-second h2,
+#block-openlucius-dpa-frontpage-news h2.block-title,
+#block-openlucius-core-recent-stuff h2.block-title {
+  margin-top: 10px;
+  font-size: 16px;
+  padding: 10px;
+  color: #333;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+}
+.heartbeat-time-ago {
+  margin-left: 10px;
+}
+#heartbeat-stream-tweet_siteactivity .username {
+  margin-right: 10px;
+}
+.heartbeat_tweet div,
+.heartbeat_tweet img,
+.heartbeat_tweet a {
+  display: inline;
+}
+.heartbeat-stream span.flag-wrapper,
+.heartbeat-stream span.hover-delete,
+.heartbeat-attachment-button {
+  background: none;
+}
+.heartbeat-messages-wrapper .heartbeat-activity {
+  float: none;
+  min-height: 75px;
+}
+li.views-fluid-grid-item {
+  background-color: transparent;
+  border: 0px;
+}
+#block-views-users-in-groups-block-1 ul.views-fluid-grid-list {
+  width: 100%;
+  clear: both;
+}
+#block-views-users-in-groups-block-1 li.views-fluid-grid-inline {
+  width: 32%;
+  min-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#block-views-users-in-groups-block-1 .view-users-in-groups .views-field-picture {
+  text-align: center;
+}
+#block-views-users-in-groups-block-1 .views-field-name {
+  max-width: none;
+}
+.no-absolute {
+  padding-top: 6px;
+}
+.no-absolute .form-select {
+  width: auto !important;
+}
+.no-absolute .dropdown-menu.inner {
+  position: relative;
+}
+.no-absolute .dropdown-menu.inner li.selected,
+.no-absolute .dropdown-menu.inner li .glyphicon {
+  display: none;
+}
+.no-absolute .dropdown-menu.inner li {
+  cursor: pointer;
+}
+.no-absolute .form-group {
+  margin-bottom: 0px;
+}
+button.selectpicker,
+button.selectpicker:hover,
+.bootstrap-select .btn,
+.bootstrap-select .btn:hover {
+  background: transparent !important;
+  color: #fff !important;
+  border: 0px !important;
+}
+.front .main-container .region-content {
+  padding-top: 0px;
+}
+.front .front-buttons {
+  margin-bottom: 65px;
+}
+.btn-group .dropdown-toggle.selectpicker.btn-default ~ .dropdown-menu {
+  overflow: visible !important;
+}
+#block-views-users-in-groups-block-1 .views-field-name a {
+  font-size: 12px;
+}
+.form-required {
+  color: #ff0000;
+}
+input.error {
+  border: 1px solid #ff0000;
+}
+.password-confirm .error {
+  color: #ee5555;
+}
+.password-confirm .ok {
+  color: #008000;
+}
+/**
+ * Password strength indicator
+ */
+.password-strength {
+  width: 200px;
+  padding-bottom: 10px;
+}
+.password-strength-title {
+  display: inline;
+}
+.password-strength-text {
+  float: right; /*LTR*/
+  font-weight: bold;
+}
+.password-indicator {
+  background-color: #ccc;
+  height: 5px;
+  width: 100%;
+}
+.password-indicator div {
+  height: 100%;
+  width: 0%;
+  background-color: #4c6;
+}
+/**
+ * Password confirmation checker
+ */
+div.password-confirm {
+  visibility: hidden;
+}
+.container-inline div,
+.container-inline label {
+  display: inline;
+}
+.container-inline .fieldset-wrapper {
+  display: block;
+}
+.nowrap {
+  white-space: nowrap;
+}
+html.js .js-hide {
+  display: none;
+}
+.element-hidden {
+  display: none;
+}
+.element-invisible {
+  position: absolute !important;
+  clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+  clip: rect(1px, 1px, 1px, 1px);
+}
+#openlucius_core-remove-clients-from-group-form {
+  text-align: center;
+}
+#openlucius_core-remove-clients-from-group-form h2 {
+  margin-bottom: 25px;
+}
+.heartbeat-activity img.avatar {
+  width: 50px;
+}
+.node-file-form .form-item-title {
+  display: none;
+}
+#node-admin-content .form-horizontal .form-group {
+  margin-left: 0px;
+  margin-right: 0px;
+}
+#node-admin-content div.form-type-select,
+#node-admin-content div.form-type-select label {
+  float: left;
+}
+#node-admin-content div.form-type-select .col-sm-10 {
+  width: auto !important;
+}
+.views-field-field-groups li {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  list-style-position: inside;
+  float: left;
+  width: 100px !important;
+  clear: both;
+}
+.panel-default > .panel-heading {
+  float: left;
+}
+img.file-icon {
+  margin: 1px 2px 0px 0px;
+  float: left;
+}
+.filelink a {
+  font-size: 16px;
+  word-break: break-all;
+}
+.filelink img {
+  margin-bottom: 5px;
+}
+.file_info_wrapper .link_to_group,
+.file_info_wrapper .userlink {
+  margin-left: 10px;
+}
+span.file_info_wrapper {
+  margin-left: 3px;
+}
+.view-file-folders h4 {
+  font-size: 14px;
+  color: #ccc;
+  margin-left: 10px;
+}
+.page-group-files span.glyphicon.glyphicon-edit {
+  float: right;
+}
+.file_info_wrapper,
+.file_info_wrapper a {
+  color: #a7a7a7;
+  font-size: 10px;
+}
+.files_backlink {
+  padding-left: 5px;
+  color: #9f9f9f;
+}
+.tabledrag-changed-warning.messages.warning {
+  background-color: #ffe675;
+  padding: 10px;
+}
+.table-responsive {
+  width: 100%;
+  overflow-y: hidden;
+  overflow-x: scroll;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+  -webkit-overflow-scrolling: touch;
+}
+.content .personal_email {
+  position: absolute;
+  bottom: 10px;
+}
+.user-picture img {
+  max-width: 66px;
+}
+#edit-picture .user-picture img {
+  max-width: none;
+}
+.block-facetapi .facetapi-facetapi-links {
+  list-style: none;
+  margin-left: 10px;
+}
+div.header-holder {
+  position: relative;
+}
+div.header-holder .submitted {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+div.header-holder h3 {
+  margin-top: 5px;
+}
+blockquote p {
+  font-size: 15px;
+}
+table.comment-alter-diff {
+  font-size: 70%;
+}
+.submitted {
+  color: #9f9898;
+}
+.links.list-inline {
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+}
+.links.list-inline > li {
+  float: left;
+  margin-bottom: -1px;
+  position: relative;
+  display: block;
+  padding: 0px;
+}
+.links.list-inline > li a {
+  color: #b8b8b8;
+  background-color: #f7f7f7;
+  padding: 5px;
+  font-size: 10px;
+  margin-right: 2px;
+  line-height: 1.428571429;
+  border: 1px solid transparent;
+  border-radius: 0;
+  position: relative;
+  display: block;
+  text-decoration: none;
+}
+.links.list-inline > li a:hover {
+  color: #000;
+  background-color: #fff;
+  border: 1px solid #f7f7f7;
+}
+h5.empty-todo-list a {
+  color: #4e4e4e;
+  margin-left: 5px;
+}
+.bootstrap-select .dropdown-menu.open {
+  overflow: visible !important;
+}
+.page-comment-reply .comment {
+  border-top: 0;
+  margin: 0 0 0 70px;
+}
+/* My Groups block */
+
+.page-recent-stuff span.glyphicon.glyphicon-user.my_groups_group_usercount {
+  font-size: 10px;
+  color: #e2e2e2;
+}
+.page-recent-stuff .badge {
+  color: #cdcdcd;
+  font-size: 10px;
+  background-color: #f7f7f7;
+}
+#block-openlucius-core-ol-mygroups span.mygroups-title {
+  max-width: 150px;
+  display: inline-block;
+  word-break: break-all;
+}
+#block-openlucius-core-ol-mygroups a.btn.btn-default.btn-xs,
+#block-views-file-folders-block-3 a.btn.btn-default.btn-xs {
+  float: right;
+  margin-top: -2px;
+}
+.region-sidebar-first {
+  font-size: 12px;
+}
+/* Recent stuff */
+.page-recent-stuff span.activity {
+  float: right;
+  font-size: 46px;
+  margin-left: 5px;
+}
+.page-recent-stuff .view-ol-home-heartbeat-activity- .new_comments .badge {
+  color: #fff;
+  font-size: 10px;
+  background-color: #ff8a8a;
+}
+.page-recent-stuff span.new_comments,
+.page-recent-stuff span.new_comments .glyphicon,
+.page-recent-stuff span.new_comments_count {
+  color: #fff;
+}
+/* Recent stuff block */
+#block-openlucius-core-recent-stuff .timeline-panel .activity {
+  float: right;
+  font-size: 46px;
+  margin-left: 5px;
+}
+#block-openlucius-core-recent-stuff .timeline span.glyphicon.glyphicon-user {
+  font-size: 32px;
+  color: #ccc;
+  margin-top: 5px;
+}
+#block-openlucius-core-recent-stuff .views-field-picture img {
+  margin-top: -115px;
+  z-index: 1;
+  position: relative;
+}
+#block-openlucius-core-recent-stuff .activity_item .timeline-heading .glyphicon {
+  color: #dde6ec;
+}
+/* Media Queries for 'my groups' block on recent activity page */
+@media screen and (min-width: 767px) and (max-width: 1200px) {
+  .region-sidebar-first .badge {
+    display: none;
+  }
+  .region-sidebar-first h2 {
+    font-size: 12px;
+  }
+}
+@media screen and (min-width: 767px) and (max-width: 992px) {
+  .region-sidebar-first .plus-text {
+    display: none;
+  }
+}
+/* Round profile picture */
+
+.views-field-picture img,
+.my_groups_groupmembers img,
+.user-picture img {
+  /* Chrome and Safari */
+  -webkit-border-radius: 55px;
+  /* Firefox */
+  -moz-border-radius: 55px;
+  /* Opera */
+  -o-border-radius: 55px;
+  /* W3C standard--when adopted across the board */
+  border-radius: 55px;
+}
+.page-recent-stuff .views-field-picture img {
+  margin-top: -115px;
+  z-index: 1;
+  position: relative;
+}
+/* Help blocks styling */
+#block-system-help {
+  padding: 18px 24px;
+  margin: 30px;
+  width: auto;
+  font-size: 16px;
+  background: url('../images/bg_help.png');
+  color: #fff;
+  z-index: 2;
+}
+#block-system-help .front-buttons {
+  display: none; /* work around for now */
+}
+div#edit-field-shared-show-clients {
+  width: 200px;
+}
+/* Recent activity timeline */
+.timeline {
+  list-style: none;
+  padding: 0px 0 20px;
+  position: relative;
+}
+.timeline:before {
+  top: 0;
+  bottom: 0;
+  position: absolute;
+  content: " ";
+  width: 3px;
+  background-color: #eeeeee;
+  left: 25px;
+  margin-right: -1.5px;
+}
+.timeline > li {
+  margin-bottom: 20px;
+  position: relative;
+  margin-right: 3px;
+}
+.timeline > li:before,
+.timeline > li:after {
+  content: " ";
+  display: table;
+}
+.timeline > li:after {
+  clear: both;
+}
+.timeline > li:before,
+.timeline > li:after {
+  content: " ";
+  display: table;
+}
+.timeline > li:after {
+  clear: both;
+}
+.timeline > li > a > .timeline-panel {
+  width: calc(100% - 75px);
+  float: right;
+  border: 1px solid #d4d4d4;
+  border-radius: 2px;
+  padding: 20px;
+  position: relative;
+  -webkit-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.175);
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.175);
+}
+.timeline > li > a > .timeline-panel:before {
+  position: absolute;
+  top: 26px;
+  left: -15px;
+  display: inline-block;
+  border-top: 15px solid transparent;
+  border-right: 15px solid #ccc;
+  border-left: 0 solid #ccc;
+  border-bottom: 15px solid transparent;
+  content: " ";
+}
+.timeline > li > a > .timeline-panel:after {
+  position: absolute;
+  top: 27px;
+  left: -14px;
+  display: inline-block;
+  border-top: 14px solid transparent;
+  border-right: 14px solid #fff;
+  border-left: 0 solid #fff;
+  border-bottom: 14px solid transparent;
+  content: " ";
+}
+.timeline > li > a > .timeline-badge {
+  color: #fff;
+  width: 50px;
+  height: 50px;
+  line-height: 50px;
+  font-size: 1.4em;
+  text-align: center;
+  position: absolute;
+  top: 16px;
+  left: 0px;
+  margin-right: -25px;
+  background-color: #999999;
+  z-index: 100;
+  border-top-right-radius: 50%;
+  border-top-left-radius: 50%;
+  border-bottom-right-radius: 50%;
+  border-bottom-left-radius: 50%;
+}
+.timeline-title {
+  margin-top: 0;
+  color: inherit;
+}
+.timeline-body > p,
+.timeline-body > ul {
+  margin-bottom: 0;
+}
+.timeline-body > p + p {
+  margin-top: 5px;
+}
+.timeline-body {
+  display: none;
+}
+.timeline-panel blockquote {
+  margin-top: 15px;
+}
+.timeline-heading > p {
+  font-size: 12px;
+}
+.timeline .text-muted {
+  font-size: 80%;
+}
+.page-recent-stuff span.new_comments {
+  float: right;
+  margin-right: 20px;
+}
+.page-recent-stuff span.certificate_new {
+  float: right;
+  color: #fff;
+  margin: 22px -51px;
+  position: relative;
+  font-size: 12px;
+  width: 40px;
+  text-align: center;
+}
+.page-recent-stuff span.comment_count {
+  margin-left: 10px;
+  font-size: 10px;
+  color: #d2c7c7;
+}
+.page-recent-stuff .region-content a .glyphicon.glyphicon-comment {
+  color: #ccc;
+}
+a.activity_item {
+  display: block;
+}
+a:hover.activity_item h5,
+a:hover.activity_item .text-muted,
+a:hover.activity_item .glyphicon,
+a:hover.activity_item .comment_count {
+  color: #ff8a8a !important;
+}
+a:hover.activity_item blockquote,
+a:hover.activity_item blockquote li {
+  color: #000;
+}
+.page-recent-stuff .view-empty {
+  text-align: center;
+  padding: 33px 24px 24px 24px;
+  margin: 30px;
+  width: auto;
+  font-size: 16px;
+  background: url('../images/bg_help.png');
+  color: #fff;
+  z-index: 2;
+}
+.page-recent-stuff .timeline_wrapper {
+  margin-top: 30px;
+}
+.page-recent-stuff blockquote {
+  border-left: 0px;
+  padding: 5px 0px;
+  margin: 0 0 10px;
+}
+.page-recent-stuff small.text-muted {
+  margin-right: 10px;
+}
+.page-recent-stuff h5 {
+  margin-bottom: 5px;
+}
+/* +File Button */
+
+.add-file a.btn.btn-default.btn-xs.btn-openlucius {
+  height: 50px;
+  margin-bottom: 20px;
+  padding: 15px 30px;
+  font-size: 14px;
+  width: 100%;
+}
+.page-recent-stuff .region-content span.glyphicon.glyphicon-user {
+  font-size: 32px;
+  color: #ccc;
+  margin-top: 5px;
+}
+a:hover.activity_item .glyphicon.glyphicon-user {
+  color: #e5e5e5 !important;
+}
+/* Node delete button */
+button#edit-delete {
+  float: right;
+  margin-left: 10px;
+}
+/**
+ * Fixes for collapsible tables.
+ */
+.collapsed > td {
+  padding: 0 !important;
+}
+.view-text-documents-in-a-group .table,
+.view-file-folders .table {
+  border-top: 1px solid #ddd;
+  table-layout: fixed;
+}
+.view-text-documents-in-a-group .table tr td,
+.view-file-folders .table tr td {
+  transition: padding .1s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #008cba;
+}
+.view-text-documents-in-a-group .table tr.collapsed td,
+.view-file-folders .table tr.collapsed td {
+  height: 0px;
+  border: 0px;
+}
+.view-text-documents-in-a-group .table tr.folder,
+.view-file-folders .table tr.folder {
+  cursor: pointer;
+}
+.td-slider {
+  display: none;
+}
+.view-text-documents-in-a-group div.indentation,
+.view-file-folders div.indentation {
+  width: 2px !important;
+}
+.view-text-documents-in-a-group div.indentation:before {
+  content: '';
+}
+.region-sidebar-second .view-text-documents-in-a-group tr a,
+.region-sidebar-second .view-file-folders tr a {
+  margin-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.region-sidebar-second .view-text-documents-in-a-group tr.folder .views-field-title .glyphicon,
+.region-sidebar-second .view-file-folders tr.folder .views-field-title .glyphicon {
+  margin-left: 8px;
+  margin-right: -10px;
+}
+.td-slider {
+  overflow: hidden;
+  white-space: nowrap;
+  word-break: break-all;
+  width: 100%;
+}
+.region-sidebar-second .view-text-documents-in-a-group tr,
+.region-sidebar-second .view-file-folders tr {
+  white-space: nowrap;
+}
+.view-file-folders td.views-field-edit-node {
+  width: 30px !important;
+}
+.region-sidebar-second .view-file-folders td.views-field-edit-node a,
+.region-sidebar-second .view-file-folders a.tabledrag-handle {
+  margin-left: 0px;
+}
+.region-sidebar-second .view-file-folders td.views-field-edit-node a {
+  display: inline-block;
+  width: 17px;
+  height: 13px;
+}
+/* Show sidebar button */
+.fixed-right {
+  display: none;
+}
+#block-openlucius-core-ol-group-heading .add-button {
+  display: none;
+}
+tr.todo-strike,
+tr.todo-strike a {
+  text-decoration: line-through;
+  color: #ccc !important;
+}
+#navbar li.last .dropdown-toggle img {
+  vertical-align: bottom;
+  margin-right: 3px;
+}
+#navbar li.last .dropdown-toggle .username {
+  vertical-align: bottom;
+}
+/* Remove the add content link */
+.page-admin-content .action-links > li {
+  display: none;
+}
+/* Who has been notified */
+.notified .show-less,
+.notified .show-more {
+  cursor: pointer;
+}
+.notified .last,
+.notified .show-less,
+.notified.shown .show-more {
+  display: none;
+}
+.notified.shown .last,
+.notified.shown .show-less {
+  display: inline-block;
+}
+.notified.shown .first {
+  margin-right: -4px;
+}
+.region-sidebar-second #block-openlucius-core-ol-textdoc .move-button {
+  width: 100%;
+  height: 45px;
+}
+.page-node-move .form-item-tid {
+  display: none;
+}
+#move-todo-list-wrapper {
+  display: none;
+}
+.node-type-ol-todo #move-todo-list-wrapper {
+  display: block;
+}
+.todo-breakdown {
+  float: right;
+  clear: right;
+  outline: none;
+  border: 0;
+  background-color: transparent;
+  font-size: 25px;
+}
+.todo-breakdown .glyphicon {
+  color: #ececec;
+}
+/**
+ * Animations for the theme.
+ */
+@-webkit-keyframes Spinning {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+@keyframes Spinning {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+#spinner {
+  font-size: 400%;
+  color: #fff;
+  font-weight: bold;
+  position: absolute;
+  left: 47%;
+  top: 47%;
+  -webkit-animation: Spinning 2000ms infinite linear;
+  -moz-animation: Spinning 2000ms infinite linear;
+  -o-animation: Spinning 2000ms infinite linear;
+  animation: Spinning 2000ms infinite linear;
+  vertical-align: middle;
+}
+/**
+ * Overlay styling.
+ */
+.openlucius_throbber {
+  display: block;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  background-color: #000;
+  opacity: .6;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+}
+/* Clear left for invoice number field. */
+.field-name-field-todo-invoice-number {
+  clear: left;
+}

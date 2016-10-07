@@ -1,0 +1,93 @@
+; Packaging information for openlucius
+name = "OpenLucius"
+description = ""
+core = "7.x"
+; ----------
+; Dependencies
+; ----------
+; Administration
+dependencies[] = admin_menu
+dependencies[] = admin_menu_toolbar
+; Chaos tool suite
+dependencies[] = ctools
+; Context
+dependencies[] = context
+dependencies[] = context_ui
+; Core
+dependencies[] = block
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = field
+dependencies[] = field_sql_storage
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = filter
+dependencies[] = image
+dependencies[] = list
+dependencies[] = locale
+dependencies[] = menu
+dependencies[] = node
+dependencies[] = number
+dependencies[] = options
+dependencies[] = search
+dependencies[] = system
+dependencies[] = taxonomy
+dependencies[] = text
+dependencies[] = user
+; Date/Time
+dependencies[] = calendar
+dependencies[] = date
+dependencies[] = date_all_day
+dependencies[] = date_api
+dependencies[] = date_ical
+dependencies[] = date_popup
+dependencies[] = date_repeat
+dependencies[] = date_repeat_field
+dependencies[] = date_tools
+dependencies[] = date_views
+; Fields
+dependencies[] = multiupload_filefield_widget
+dependencies[] = node_reference
+dependencies[] = references
+dependencies[] = user_reference
+; OpenLucius
+dependencies[] = openlucius_core
+; Other
+dependencies[] = better_formats
+dependencies[] = comment_alter
+dependencies[] = diff
+dependencies[] = entity
+dependencies[] = libraries
+dependencies[] = logintoboggan
+dependencies[] = publish_button
+dependencies[] = strongarm
+dependencies[] = token
+dependencies[] = transliteration
+; Search
+dependencies[] = search_autocomplete
+; Search Toolkit
+dependencies[] = facetapi
+dependencies[] = search_facetapi
+; Site Tweaks
+dependencies[] = itweak_upload
+; User interface
+dependencies[] = jquery_update
+dependencies[] = wysiwyg
+; Views
+dependencies[] = draggableviews
+dependencies[] = views
+dependencies[] = views_autocomplete_filters
+dependencies[] = views_fluid_grid
+dependencies[] = views_ui
+; Features
+dependencies[] = features
+dependencies[] = openlucius_core_1
+dependencies[] = openlucius_permissions
+dependencies[] = openlucius_variables
+
+; Information added by Drupal.org packaging script on 2015-06-13
+version = "7.x-1.0-rc1"
+core = "7.x"
+project = "openlucius"
+datestamp = "1434198831"
+

@@ -1,0 +1,52 @@
+<?php
+
+/**
+ * @file
+ * Installation code for iTweakUpload.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function itweak_upload_install() {
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function UNUSED_itweak_upload_update_7000() {
+// @todo - implement migration from itweak_upload D6
+}
+
+
+/**
+ * Implements hook_requirements().
+ */
+function itweak_upload_requirements($phase) {
+  $requirements = array();
+  // Ensure translations don't break at install time
+  $t = get_t();
+
+  switch ($phase) {
+    case 'install':
+      break;
+
+    case 'runtime':
+      break;
+
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function itweak_upload_uninstall() {
+  //remove system variables
+  db_delete('variable')
+  ->condition('name', 'itweak_upload_%', 'LIKE')
+  ->execute();
+  cache_clear_all('variables', 'cache');
+}
+

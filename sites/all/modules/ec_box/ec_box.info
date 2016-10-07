@@ -1,0 +1,4 @@
+name = EC Box
+description = Provides embeded box.com file browser. Simply create a folder on your <a href="http://box.com">box.com</a> account, then click share, then copy and paste the share link into this field. It will automatically create the embed code and embed that folder into your node. Created by <a href="https://www.drupal.org/u/mattc321">mattc321</a> and <a href="https://www.drupal.org/u/phandolin">phandolin</a>
+core = 7.x
+dependencies[] = field

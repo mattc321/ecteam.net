@@ -1,0 +1,35 @@
+<?php
+/**
+ * @file
+ * Creates the table we need to store document IDs.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function box_view_schema() {
+  $schema['box_view_documents'] = array(
+    'description' => 'Saves Box_View_Documents based on their file path.',
+    'fields' => array(
+      'path' => array(
+        'description' => 'Hashed path of the document in the system.',
+        'type' => 'varchar',
+        'length' => 32,
+        'default' => '',
+      ),
+      'document_id' => array(
+        'description' => 'The document ID of the uploaded document.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'document' => array(
+        'description' => 'The serialized Box_View_Document object.',
+        'type' => 'text',
+        'serialize' => TRUE,
+      ),
+    ),
+  );
+  return $schema;
+}

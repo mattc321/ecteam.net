@@ -1,0 +1,125 @@
+/* Blue color */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+table th,
+table th a,
+table tr .glyphicon {
+  color: #0ce3ac;
+}
+
+/* Front page badge (circle) color */
+.btn-default .badge {
+  background-color: #0ce3ac;
+}
+
+/* Comments */
+html .front .view-groups h4,
+.ol-content-textdoc ul,
+/* Agenda item title */
+html .front .view-groups h4,
+html .front .view-groups a:hover,
+.calendar-calendar .field-content a,
+.node-type-ol-text-document .region-content.well,
+.front a:hover,
+.node-type-ol-text-document #comments h2 {
+  color: #000 !important;
+}
+
+#comments h2,
+.ol-content h2,
+.front .view-actionlink .glyphicon,
+.view-users-in-groups .view_all_users .glyphicon {
+  color: #fff !important;
+}
+
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+  color: #000;
+}
+
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+
+/* Search bar in navbar */
+.ui-autocomplete-input,
+.input-group-btn .btn-default {
+  height: 39px !important;
+}
+
+/* Regular textfields */
+input[type="text"] {
+  height: 35px !important;
+  max-height: 35px !important;
+}
+
+.node-type-ol-todo input[type="text"] {
+  height: 42px !important;
+  max-height: 42px !important;
+}
+
+/* Search bar in navbar */
+.ui-autocomplete-input,
+.input-group-btn .btn-default {
+  height: 39px !important;
+  min-height: 39px;
+}
+
+/* Searchbox bit down */
+.navbar #block-search-form {
+  margin: 10px 0 0 0;
+}
+
+/* Due to thicker header */
+.main-container {
+  margin-top: 80px;
+}
+
+/* Table odd rows background gray */
+.view-messages-in-a-group tr.odd,
+.view-messages-in-a-group tr.odd td.active,
+.view-all-todo-lists-in-a-group tr.odd,
+.view-all-todo-lists-in-a-group tr.odd td.active {
+  background-color: #434343;
+}
+
+/* Thick border */
+.region-content .views-exposed-form {
+  border-bottom: 10px solid #463d3d;
+}
+
+ul.custom-select li {
+  color: #000 !important;
+}
+
+.view-id-dashboard_blocks .table {
+  background-color: #464545;
+  border: 1px solid #464545;
+  border-right: 1px solid #464545;
+  border-bottom: 1px solid #464545;
+  -webkit-box-shadow: 2px 2px 2px #585555;
+  box-shadow: 2px 2px 2px #585555;
+}
+
+/* User info on his/her dashboard */
+.view-id-dashboard_blocks .table > thead > tr > th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #585555;
+}

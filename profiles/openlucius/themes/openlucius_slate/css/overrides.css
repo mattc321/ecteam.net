@@ -1,0 +1,99 @@
+/* Front page badge (circle) color */
+.btn-default .badge {
+  background-color: #ccc;
+}
+
+.view-text-documents-in-a-group a,
+.ol-content-textdoc li,
+#comments h2,
+.view-id-groups .views-field-title a,
+.view-users-in-groups .views-field-name a,
+/* Agenda item title */
+.calendar-calendar .field-content a,
+.node-type-ol-text-document .region-content.well,
+ul.custom-select li {
+  color: #000 !important;
+}
+
+.view-text-documents-in-a-group td a,
+.well .view-actionlink h4 a,
+table tr .glyphicon {
+  color: #fff !important;
+}
+
+.navbar #block-search-form {
+  margin: 5px 0 0 0 !important;
+}
+
+/* Thick border */
+.region-content .views-exposed-form {
+  border-bottom: 10px solid #444;
+}
+
+/* Search bar in navbar */
+.ui-autocomplete-input,
+.input-group-btn .btn-default {
+  height: 35px !important;
+}
+
+/* Regular textfields */
+input[type="text"] {
+  height: 33px !important;
+  max-height: 33px !important;
+}
+
+/* Table odd rows background gray */
+.view-messages-in-a-group tr.odd,
+.view-all-todo-lists-in-a-group tr.odd,
+.view-todos-on-todo-list-page tr.odd {
+  background-color: #353a41;
+}
+
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+  color: #000;
+}
+
+/* Break field to under content */
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+
+/* Add reaction h2 color white */
+.node-type-ol-message #comments .title,
+.node-type-ol-todo #comments .title {
+  color: #fff !important;
+}
+
+/* Assign to field on todo's height */
+.node-type-ol-todo #comments input[type="text"] {
+  min-height: 38px !important;
+}
+
+/* Panels background under body field in comments */
+.node-type-ol-todo .panel,
+.node-type-ol-message .panel {
+  background-color: #1c1e22;
+  border: 0;
+}
+
+.view-id-dashboard_blocks .table {
+  border: 1px solid #6d6d6d;
+  border-right: 1px solid #464545;
+  border-bottom: 1px solid #464545;
+  -webkit-box-shadow: 2px 2px 2px #585555;
+  box-shadow: 2px 2px 2px #585555;
+}
+
+/* User info on his/her dashboard */
+.view-id-dashboard_blocks .table > thead > tr > th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #6d6d6d;
+}

@@ -1,0 +1,62 @@
+diff --git a/editors/js/tinymce-3.js b/editors/js/tinymce-3.js
+index b38f523..cdfbde3 100644
+--- a/editors/js/tinymce-3.js
++++ b/editors/js/tinymce-3.js
+@@ -46,6 +46,14 @@ Drupal.wysiwyg.editor.init.tinymce = function(settings) {
+ Drupal.wysiwyg.editor.attach.tinymce = function(context, params, settings) {
+   // Configure editor settings for this input format.
+   var ed = new tinymce.Editor(params.field, settings);
++  // Activate the "Paste as Plain Text" button by default if the appropriate setting (paste_text_sticky) is chosen.
++  if (ed.settings.paste_text_sticky) {
++    ed.onInit.add(function() {
++      if (!ed.settings.readonly) {
++        ed.pasteAsPlainText = true;
++      }
++    });
++  }
+   // Reset active instance id on any event.
+   ed.onEvent.add(function(ed, e) {
+     Drupal.wysiwyg.activeId = ed.id;
+diff --git a/editors/tinymce.inc b/editors/tinymce.inc
+index a7250f3..dbad2fd 100644
+--- a/editors/tinymce.inc
++++ b/editors/tinymce.inc
+@@ -171,6 +171,9 @@ function wysiwyg_tinymce_settings($editor, $config, $theme) {
+   if (isset($config['paste_auto_cleanup_on_paste'])) {
+     $settings['paste_auto_cleanup_on_paste'] = $config['paste_auto_cleanup_on_paste'];
+   }
++  if (isset($config['paste_text_sticky'])) {
++    $settings['paste_text_sticky'] = true;
++  }
+   if (isset($config['preformatted'])) {
+     $settings['preformatted'] = $config['preformatted'];
+   }
+diff --git a/wysiwyg.admin.inc b/wysiwyg.admin.inc
+index 510e1e3..2925e2b 100644
+--- a/wysiwyg.admin.inc
++++ b/wysiwyg.admin.inc
+@@ -39,6 +39,7 @@ function wysiwyg_profile_form($form, &$form_state, $profile) {
+     'remove_linebreaks' => TRUE,
+     'apply_source_formatting' => FALSE,
+     'paste_auto_cleanup_on_paste' => FALSE,
++    'paste_text_sticky' => FALSE,
+     'css_setting' => 'theme',
+     'css_path' => NULL,
+     'css_classes' => NULL,
+@@ -249,6 +250,16 @@ function wysiwyg_profile_form($form, &$form_state, $profile) {
+     '#description' => t('If enabled, the default paste function (CTRL-V or SHIFT-INS) behaves like the "paste from word" plugin function.'),
+   );
+
++  if ($profile->editor == 'tinymce') {
++    $form['output']['paste_text_sticky'] = array(
++      '#type' => 'checkbox',
++      '#title' => t('Activate "Paste as Plain Text" button and make it sticky'),
++      '#default_value' => $profile->settings['paste_text_sticky'],
++      '#return_value' => 1,
++      '#description' => t('If enabled, the "Paste as Plain Text" is activated by default and doesn\'t deactivate after text is pasted.'),
++    );
++  }
++
+   $form['css'] = array(
+     '#type' => 'fieldset',
+     '#title' => t('CSS'),

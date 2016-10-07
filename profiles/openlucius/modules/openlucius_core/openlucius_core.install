@@ -1,0 +1,89 @@
+<?php
+/**
+ * @file
+ * This file contains the required methods / updates for the core install.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function openlucius_core_install() {
+
+  // Install the node reference schema.
+  drupal_install_schema('openlucius_core_node_references');
+}
+
+
+/**
+ * Adds hashes to existing users.
+ */
+function openlucius_core_update_7000() {
+  $users = db_select('users', 'u')
+    ->fields('u', array('uid'))
+    ->condition('uid', array(0, 1), 'NOT IN')
+    ->condition('status', 1, '=')
+    ->execute()
+    ->fetchAllKeyed(0, 0);
+
+  if (!empty($users)) {
+    foreach (array_keys($users) as $uid) {
+      $user = user_load($uid);
+      user_save($user);
+    }
+  }
+}
+
+/**
+ * Create a table for node references.
+ */
+function openlucius_core_update_7001() {
+  // Check if table exists, if not install the schema.
+  if (db_table_exists('openlucius_core_node_references') == FALSE) {
+    drupal_install_schema('openlucius_core_node_references');
+  }
+}
+
+/**
+ * Schema for openlucius core node references.
+ */
+function openlucius_core_node_references_schema() {
+
+  // Create a new database table schema.
+  $schema['openlucius_core_node_references'] = array(
+    'description' => 'The base table for the openlucius core node references.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a node reference.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'rid' => array(
+        'description' => 'The relation id for a node reference.',
+        'type' => 'int',
+      ),
+      'type' => array(
+        'description' => 'The type of reference, node or comment.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'node_references' => array(
+        'description' => 'The serialized string of all node references to this node.',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array(
+      'id',
+    ),
+    'unique keys' => array(
+      'id' => array(
+        'id',
+      ),
+    ),
+  );
+
+  // Return the schema.
+  return $schema;
+}

@@ -1,0 +1,606 @@
+@media all and (max-width: 767px) {
+  .comment-form .field-name-field-todo-list-reference,
+  .comment-form .field-name-field-todo-label,
+  .comment-form .field-name-field-todo-user-reference,
+  .comment-form .field-name-field-todo-due-date-singledate,
+  .comment-form .notifies.form-wrapper .panel-default,
+  .node-ol_todo-form .field-name-field-todo-list-reference,
+  .node-ol_todo-form .field-name-field-todo-list-label,
+  .node-ol_todo-form .field-name-field-todo-label,
+  .node-ol_todo-form .field-name-field-todo-user-reference,
+  .node-ol_todo-form .field-name-field-todo-due-date-singledate,
+  .node-ol_todo-form .field-name-field-shared-time-maximum,
+  #edit-notify-individual-fieldset,
+  .notifies .team-companies,
+  .page-group-calendar aside #edit-title-wrapper,
+  .page-group-calendar aside #edit-type-wrapper,
+  .page-group-calendar aside #edit-field-todo-user-reference-uid-wrapper,
+  .page-node-add-ol-event .start-date-wrapper,
+  .page-node-add-ol-event .end-date-wrapper,
+  html #edit-field-event-date-und-0-value,
+  html #edit-field-event-date-und-0-value .form-item-field-event-date-und-0-value-date,
+  html #edit-field-event-date-und-0-value .form-item-field-event-date-und-0-value-date #edit-field-event-date-und-0-value-datepicker-popup-0,
+  html #edit-field-event-date-und-0-value .form-item-field-event-date-und-0-value-time,
+  html #edit-field-event-date-und-0-value .form-item-field-event-date-und-0-value-time #edit-field-event-date-und-0-value-timeEntry-popup-1,
+  html #edit-field-event-date-und-0-value2,
+  html #edit-field-event-date-und-0-value2 .form-item-field-event-date-und-0-value2-date,
+  html #edit-field-event-date-und-0-value2 .form-item-field-event-date-und-0-value2-date #edit-field-event-date-und-0-value2-datepicker-popup-0,
+  html #edit-field-event-date-und-0-value2 .form-item-field-event-date-und-0-value2-time,
+  html #edit-field-event-date-und-0-value2 .form-item-field-event-date-und-0-value2-time #edit-field-event-date-und-0-value2-timeEntry-popup-1,
+  .page-node-edit .field-type-datestamp,
+  .page-node-edit .field-type-datestamp #field-todo-due-date-singledate-add-more-wrapper,
+  .page-node-edit .field-type-datestamp #field-todo-due-date-singledate-add-more-wrapper .date-no-float,
+  .page-node-edit .field-type-datestamp #field-todo-due-date-singledate-add-more-wrapper .date-no-float .form-type-date-popup,
+  .page-node-edit .field-type-datestamp #field-todo-due-date-singledate-add-more-wrapper .date-no-float .form-type-date-popup .date-padding,
+  .page-node-edit .field-type-datestamp #field-todo-due-date-singledate-add-more-wrapper .date-no-float .form-type-date-popup .date-padding .form-type-textfield,
+  .page-node-edit .field-type-datestamp #field-todo-due-date-singledate-add-more-wrapper .date-no-float .form-type-date-popup .date-padding .form-type-textfield input
+  {
+    float: left !important;
+    width: 100% !important;
+  }
+  h2.title.comment-form {
+    font-size: 29px;
+  }
+  .node-ol-message .field-name-body.field-type-text-with-summary,
+  .node-type-ol-todo-list #block-views-todos-on-todo-list-page-block .field-name-field-todolist-description {
+    padding-top: 20px;
+  }
+  .node-ol-todo #comments .indented {
+    margin-left: 30px;
+  }
+  #edit-field-todo-comm-show-clients.field-type-list-boolean {
+    margin-left: -20px;
+  }
+  #edit-notify-individual .form-type-checkbox {
+    height: 30px;
+    width: auto;
+    display: inline-block;
+  }
+  #edit-notify-individual .form-type-checkbox input[type="checkbox"] {
+    top: 0px;
+    float: left;
+    height: 20px;
+    margin-right: 5px;
+  }
+  #edit-notify-individual .form-type-checkbox label {
+    overflow: hidden;
+    text-overflow: inherit;
+    width: auto;
+    display: inline-block;
+    white-space: nowrap;
+    float: left;
+  }
+  .panel-title {
+    font-size: 12px;
+  }
+  h1.page-header {
+    font-size: 18px;
+  }
+  .ol-content .nav-tabs {
+    height: 40px !important;
+  }
+  .field-name-field-todo-list-reference .field-items {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .field-name-field-shared-files .panel {
+    min-height: 100px;
+  }
+  .field-name-field-shared-files .panel .panel-body {
+    padding: 0;
+  }
+  .node-ol_todo-form .notifies .team-companies {
+    min-height: 175px !important;
+  }
+  .node-ol-todo #comments .header-holder h3 a {
+    width: 100%;
+    float: left;
+    padding: 0px 0 5px 0;
+  }
+  .page-group-calendar .view-group-calendar .view-header,
+  .page-group-calendar .view-group-calendar .view-header .pager {
+    margin: 0;
+    clear: both;
+  }
+  .page-group-calendar .view-group-calendar .view-header .date-heading {
+    display: inline-block;
+  }
+  .page-group-calendar .view-group-calendar .view-header .date-heading h3 {
+    margin-top: 50px;
+  }
+  .page-group-calendar aside .views-exposed-widget.views-reset-button {
+    float: left;
+    clear: none;
+  }
+  .page-group-calendar aside .block-views .content {
+    margin-top: -25px;
+  }
+  .page-group-calendar .view-action-link {
+    clear: both !important;
+    z-index: 1031 !important;
+    height: 50px;
+    width: 100%;
+  }
+
+  /* Recent stuff */
+  .page-recent-stuff span.activity {
+    font-size: 20px;
+  }
+  .page-recent-stuff blockquote {
+    border-left: 0px;
+    padding-left: 0px;
+  }
+
+  /* User picture */
+  .user-picture img {
+    max-height: 50px;
+    max-width: 50px;
+  }
+
+  /* Comment heading */
+  h2.title.comment-form,
+  .referenced-from-wrapper h3 {
+    font-size: 18px;
+  }
+  h2.title {
+    font-size: 22px;
+  }
+  .submitted {
+    font-size: 9px;
+  }
+  .comment .header-holder {
+    height: 30px;
+    width: 100%;
+    display: block;
+  }
+  .comment .header-holder h3 {
+    font-size: 12px;
+    padding-top: 2px;
+    width: 30px;
+    float: left;
+  }
+  .comment .header-holder .submitted {
+    top: 5px;
+    left: 30px;
+    max-width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+  }
+  .comment .content {
+    float: left;
+    width: 100%;
+  }
+  .comment .content .comment-alter-diff {
+    width: 100%;
+  }
+  .page-node .ol-node,
+  .page-comment-reply .ol-node {
+    margin: 0;
+  }
+  .region-content .user-picture,
+  .ol-new {
+    display: none;
+  }
+  .region-content .user-picture img {
+    max-height: 25px;
+    max-width: 25px;
+  }
+  #comments {
+    margin-top: 0px;
+    padding-top: 0px;
+  }
+  /* Date field full width */
+  #comment-form .container-inline-date,
+  #comment-form .container-inline-date .form-type-date-popup,
+  #comment-form .container-inline-date .form-type-date-popup .date-padding,
+  #comment-form .container-inline-date .form-type-date-popup .date-padding .form-type-textfield,
+  #comment-form .container-inline-date .form-type-date-popup .date-padding .form-type-textfield input {
+    width: 100%;
+  }
+  /* Font sizes */
+  .node-ol-todo .submitted,
+  .node-ol-todo .submitted a {
+    font-size: 12px;
+  }
+  .node-ol-todo .comment ul.list-inline {
+    float: left;
+    padding: 5px 0;
+    width: 100%;
+  }
+  html .node-ol-todo #comment-form .panel.team-companies {
+    min-height: 0px !important;
+  }
+  .page-comment-reply .comment {
+    margin: 0;
+  }
+  .page-comment-reply .comment .list-inline {
+    height: 50px;
+  }
+  #edit-notify-individual-fieldset {
+    margin-bottom: 20px !important;
+  }
+  #edit-notify-individual-fieldset,
+  #edit-team-companies {
+    min-height: inherit !important;
+  }
+  .node-type-ol-text-document .region-content {
+    padding-top: 15px;
+  }
+  .node-type-ol-text-document #comment-form .notifies,
+  .node-type-ol-text-document #comment-form .field-name-field-shared-files,
+  .node-type-ol-text-document #comment-form .field-name-field-shared-files .panel {
+    background-image: url('../images/ol_paper.jpg');
+  }
+  #comments .indented {
+    position: relative;
+  }
+  .ol-new {
+    margin: 30px 0 0 0;
+  }
+}
+@media all and (max-width: 375px) {
+  html .region-content {
+    min-height: 0px !important;
+  }
+  #comment-form .notifies .panel-title,
+  #comment-form .notifies .panel-title .check-all {
+    font-size: 11px;
+  }
+  .node-type-ol-todo .page-header {
+    line-height: 25px;
+  }
+  .node-type-ol-group #block-views-todos-in-group-dashboard-block h2 a,
+  .node-type-ol-group #block-views-messages-in-a-group-block-1 h2 a,
+  .node-type-ol-group #block-views-1ed4d15ee5805f2f30eefdcf3a72a143 h2 a,
+  .node-type-ol-group #block-openlucius-files-ol-group-files h2 a {
+    font-size: 19px;
+  }
+  .node-type-ol-group #block-system-help {
+    margin: 0;
+  }
+  .page-group-todo-lists h2.block-title,
+  .node-type-ol-group h2.block-title,
+  #block-openlucius-core-ol-textdoc h2.block-title {
+    margin: 0;
+    padding: 0;
+  }
+  .node-type-ol-group #block-views-todos-in-group-dashboard-block {
+    margin-bottom: 0;
+  }
+  .node-type-ol-group .view-text-documents-in-a-group .view-header,
+  .node-type-ol-group .view-todos-in-group-dashboard .view-header {
+    margin: 10px 0;
+  }
+  .view-text-documents-in-a-group .views-fluid-grid-list li,
+  .view-text-documents-in-a-group .views-fluid-grid-list li.views-fluid-grid-inline {
+    height: auto;
+    width: 100%;
+    margin: 10px 0;
+  }
+  /* Text documents page */
+  #views-exposed-form-text-documents-in-a-group-page-1 #edit-keys-wrapper,
+  #views-exposed-form-text-documents-in-a-group-page-1 .views-submit-button,
+  #views-exposed-form-text-documents-in-a-group-page-1 .views-submit-button .btn {
+    width: 100%;
+    margin: 3px 0;
+    padding: 0;
+  }
+  #views-exposed-form-text-documents-in-a-group-page-1 .views-exposed-form {
+    padding: 0;
+    margin-bottom: 10px;
+  }
+  #comment-form .form-group {
+    margin-bottom: 5px;
+  }
+  /* Calendar */
+  .page-group-calendar .view-group-calendar .view-actionlink,
+  .page-group-calendar .view-group-calendar .view-header {
+    width: 100%;
+    text-align: center;
+  }
+  .page-group-calendar .view-group-calendar .date-nav-wrapper .date-nav {
+    display: block;
+    float: left;
+    height: auto;
+    border: 0;
+    min-height: 0px;
+    margin: 0;
+  }
+  .page-group-calendar .view-group-calendar .view-header .date-heading {
+    display: block;
+  }
+  .page-group-calendar .view-group-calendar .view-header .pager {
+    float: left;
+    width: 100%;
+    margin: auto;
+  }
+  .page-group-calendar .view-group-calendar .view-header .pager .date-prev {
+    position: absolute;
+    left: 0;
+    width: 50%;
+    text-align: center;
+  }
+  .page-group-calendar .view-group-calendar .view-header .pager .date-next {
+    position: absolute;
+    right: 0;
+    width: 50%;
+    text-align: center;
+  }
+  .page-group-calendar .view-group-calendar .view-header .pager .date-prev a,
+  .page-group-calendar .view-group-calendar .view-header .pager .date-next a {
+    width: 100%;
+    margin: 0;
+  }
+  .page-group-calendar #block-views-exp-group-calendar-page-1 h2.block-title {
+    display: none;
+  }
+  .page-group-calendar #block-views-exp-group-calendar-page-1 .content,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-submit-all-todo-lists-in-a-group,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-reset {
+    margin-top: 0px;
+  }
+  .page-group-calendar #views-exposed-form-group-calendar-page-1 .views-exposed-widgets #edit-title-wrapper,
+  .page-group-calendar #views-exposed-form-group-calendar-page-1 .views-exposed-widgets #edit-type-wrapper,
+  .page-group-calendar #views-exposed-form-group-calendar-page-1 .views-exposed-widgets #edit-field-todo-user-reference-uid-wrapper {
+    padding: .5em 0;
+  }
+  /* Group users */
+  .page-group-users #views-exposed-form-users-in-groups-page,
+  .page-group-users #views-exposed-form-users-in-groups-page .views-exposed-widgets,
+  .page-group-users #views-exposed-form-users-in-groups-page .views-exposed-widgets #edit-name-wrapper,
+  .page-group-users #views-exposed-form-users-in-groups-page .views-exposed-widgets .views-submit-button,
+  .page-group-users #views-exposed-form-users-in-groups-page .views-exposed-widgets .views-submit-button .btn,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-status-1-wrapper,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 .views-submit-button,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-submit-all-todo-lists-in-a-group,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 .views-reset-button,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-reset,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-title-wrapper,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-field-todo-label-tid-wrapper,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-date-filter-wrapper {
+    padding: .5em 0;
+    width: 100%;
+  }
+  .page-group-users #views-exposed-form-users-in-groups-page .views-exposed-form {
+    margin: 0;
+    padding: 0;
+  }
+  .page-group-users #openlucius-core-add-form {
+    max-width: inherit;
+  }
+  .page-group-users .view-users-in-groups .views-fluid-grid-list,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-date-filter-wrapper .container-inline-date,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-date-filter-wrapper .container-inline-date .form-type-date-popup,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-date-filter-wrapper .container-inline-date .form-type-date-popup #edit-date-filter-value,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-date-filter-wrapper .container-inline-date .form-type-date-popup #edit-date-filter-value .form-group,
+  #views-exposed-form-all-todo-lists-in-a-group-page-1 #edit-date-filter-wrapper .container-inline-date .form-type-date-popup #edit-date-filter-value .form-group .form-text {
+    width: 100%;
+  }
+  .page-group-users .view-users-in-groups .views-fluid-grid-list .views-fluid-grid-item {
+    width: 45%;
+    margin: 0 6px;
+    min-height: 260px;
+  }
+  .page-group-users .view-users-in-groups .views-field-name {
+    text-align: left;
+  }
+  .page-group-users .view-users-in-groups .views-field-edit-node a {
+    top: 12px;
+    right: 8px;
+  }
+  #ol-file-folder-node-form .form-submit,
+  #file-node-form .form-submit {
+    width: 100%;
+  }
+  .node-ol-text-document #comments .indented {
+    margin-left: 30px;
+  }
+  .node-ol-message .submitted {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-top: 8px;
+    width: 55%;
+  }
+  .node-ol-todo .tabs--primary {
+    float: left;
+    width: 100%;
+  }
+  .node-ol-todo .submitted {
+    clear: left;
+  }
+  .node-ol-todo .ol-content .field-name-field-todo-list-reference,
+  .node-ol-todo .ol-content .field-name-field-todo-label {
+    font-size: 12px;
+  }
+  h1.page-header {
+    font-size: 25px;
+  }
+  .node-ol-message #comments .submitted {
+    padding-top: 0;
+  }
+  .node-ol-message #comments .indented {
+    margin-left: 30px;
+  }
+  .node-ol-message .header-holder .submitted {
+    width: 85%;
+  }
+  .node-ol-text-document .notifies .team-companies {
+    min-height: inherit !important;
+  }
+  #edit-submit,
+  #edit-delete,
+  #edit-unpublish {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+@media all and (max-width: 320px) {
+  .page-group-users .view-users-in-groups .views-fluid-grid-list .views-fluid-grid-item {
+    width: 100%;
+    margin: 10px 0;
+  }
+  .page-group-users .view-users-in-groups .views-field-edit-node a {
+    top: 13px;
+    right: 10px;
+  }
+  .node-type-ol-group #block-views-todos-in-group-dashboard-block h2 a,
+  .node-type-ol-group #block-views-messages-in-a-group-block-1 h2 a,
+  .node-type-ol-group #block-views-1ed4d15ee5805f2f30eefdcf3a72a143 h2 a,
+  .node-type-ol-group #block-openlucius-files-ol-group-files h2 a {
+    font-size: 14px;
+  }
+  .node-type-ol-group #block-views-todos-in-group-dashboard-block h2 a .btn,
+  .node-type-ol-group #block-views-messages-in-a-group-block-1 h2 a .btn,
+  .node-type-ol-group #block-views-1ed4d15ee5805f2f30eefdcf3a72a143 h2 a .btn,
+  .node-type-ol-group #block-openlucius-files-ol-group-files h2 a .btn {
+    padding: 2px 5px;
+  }
+  .node-ol-message .submitted {
+    width: 50%;
+  }
+  /* Sidebar */
+  .row.toggled .col-sm-3 {
+    width: 96%;
+    position: fixed;
+    top: 15%;
+    right: 0px;
+    display: block !important;
+    z-index: 1032;
+  }
+}
+/* Remove text from group heading buttons. */
+@media all and (max-width: 531px) {
+  /* Group dashboard */
+  .node-type-ol-group #block-openlucius-core-ol-group-heading a {
+    font-size: 12px;
+  }
+  .node-type-ol-group #block-openlucius-core-ol-group-heading a .glyphicon {
+    margin-right: 5px;
+  }
+  .node-type-ol-group #block-openlucius-core-ol-group-heading a .text {
+    display: none;
+  }
+  #block-openlucius-core-ol-group-heading .add-button {
+    display: inline;
+  }
+}
+/* Toggle sidebar button for all devices. */
+@media (min-width: 234px) and (max-width: 992px) {
+  .fixed-right {
+    display: block;
+    position: absolute;
+    z-index: 1032;
+    right: 0px;
+    bottom: -28px;
+  }
+  .col-sm-3 {
+    height: 90%;
+  }
+  .col-sm-3 .region-sidebar-second {
+    position: fixed;
+    right: 0px;
+    top: 73px;
+    max-height: 85%;
+    width: 96%;
+    overflow: scroll;
+  }
+}
+@media all and (min-width: 768px) and (max-width: 991px) {
+  .col-sm-3 {
+    display: none !important;
+  }
+  .container,
+  .col-sm-9 {
+    width: 100%;
+  }
+}
+/* Fix breakpoint tablet. */
+@media (max-width: 769px) {
+  .col-sm-3 {
+    display: none !important;
+  }
+  .col-sm-9 {
+    width: 100%;
+  }
+  #comments {
+    clear: left;
+  }
+  .row.toggled .col-sm-3 #block-views-support-open-new-block {
+    max-height: 350px;
+    overflow: scroll;
+  }
+
+  .row.toggled .col-sm-9,
+  .row .col-sm-9 {
+    width: 100%;
+  }
+}
+@media (min-width: 321px) and (max-width: 375px) {
+  /* Sidebar */
+  .row.toggled .col-sm-3 {
+    width: 100%;
+    position: fixed;
+    top: 9%;
+    right: 0px;
+    display: block !important;
+    z-index: 1032;
+  }
+}
+@media (min-width: 376px) and (max-width: 992px) {
+  /* Sidebar */
+  .row.toggled .col-sm-3 {
+    width: 80%;
+    position: fixed;
+    top: 15%;
+    right: 0px;
+    display: block !important;
+    z-index: 1032;
+  }
+}
+/**
+ * Ipad fixes.
+ */
+@media(max-width:1000px)  {
+  .navbar-collapse.collapse {
+    display: none !important;
+  }
+  .navbar-collapse {
+    overflow-x: visible !important;
+  }
+  .collapse.in {
+    display: block !important;
+  }
+  .navbar-toggle {
+    display: block;
+  }
+  .navbar-header {
+    width: 100%;
+  }
+  html .navbar-collapse .navbar-nav .first {
+    clear: both !important;
+  }
+  .no-absolute {
+    margin-left: -12px;
+  }
+  .navbar #block-search-form {
+    clear: both;
+    max-width: none;
+    margin: 5px 0px 10px;
+  }
+  .navbar-nav > li {
+    float: none;
+  }
+  .navbar-nav {
+    float: none;
+    margin: 6px -15px;
+  }
+}
+@media(max-width:450px)  {
+  .ol-new {
+    margin: 55px 0px 10px 0;
+  }
+}

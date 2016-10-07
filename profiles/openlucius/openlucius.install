@@ -1,0 +1,177 @@
+<?php
+/**
+ * @file
+ * This file contains all installation functionality.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ */
+function openlucius_install() {
+  // Enable some openlucius blocks.
+  $default_theme = 'openlucius';
+  $admin_theme = 'rubik';
+  // Disable all themes.
+  db_update('system')
+    ->fields(array('status' => 0))
+    ->condition('type', 'theme')
+    ->execute();
+  // Enable $default_theme.
+  db_update('system')
+    ->fields(array('status' => 1))
+    ->condition('type', 'theme')
+    ->condition('name', $default_theme)
+    ->execute();
+  // Enable $admin_theme.
+  db_update('system')
+    ->fields(array('status' => 1))
+    ->condition('type', 'theme')
+    ->condition('name', $admin_theme)
+    ->execute();
+  variable_set('admin_theme', $admin_theme);
+  // Activate admin theme when editing a node.
+  variable_set('node_admin_theme', '1');
+  $blocks = array(
+    array(
+      'module' => 'system',
+      'delta' => 'main',
+      'theme' => $default_theme,
+      'status' => 1,
+      'weight' => 0,
+      'region' => 'content',
+      'pages' => '',
+      'cache' => -1,
+    ),
+    array(
+      'module' => 'user',
+      'delta' => 'login',
+      'theme' => $default_theme,
+      'status' => 1,
+      'weight' => 0,
+      'region' => 'sidebar_first',
+      'pages' => '',
+      'cache' => -1,
+    ),
+    array(
+      'module' => 'system',
+      'delta' => 'help',
+      'theme' => $default_theme,
+      'status' => 1,
+      'weight' => -10,
+      'region' => 'content',
+      'pages' => '',
+      'cache' => -1,
+    ),
+    array(
+      'module' => 'system',
+      'delta' => 'main',
+      'theme' => $admin_theme,
+      'status' => 1,
+      'weight' => 0,
+      'region' => 'content',
+      'pages' => '',
+      'cache' => -1,
+    ),
+    array(
+      'module' => 'system',
+      'delta' => 'help',
+      'theme' => $admin_theme,
+      'status' => 1,
+      'weight' => 0,
+      'region' => 'help',
+      'pages' => '',
+      'cache' => -1,
+    ),
+  );
+  // Drop system / user blocks to ensure correct building.
+  db_delete('block')->condition('module', 'system')->execute();
+  db_delete('block')->condition('module', 'user')->execute();
+  // Add in our blocks defined above.
+  $query = db_insert('block')->fields(array(
+    'module',
+    'delta',
+    'theme',
+    'status',
+    'weight',
+    'region',
+    'pages',
+    'cache',
+    )
+  );
+  foreach ($blocks as $block) {
+    $query->values($block);
+  }
+  $query->execute();
+
+  // Update the menu router information.
+  menu_rebuild();
+
+  // We don't need these defaults menu items (My account & Log out).
+  // They are system links, so deleting is not very cleaver, so disabling.
+  $menuitem = array(
+    'link_path' => drupal_get_normal_path('user'),
+    'mlid' => 2,
+    'hidden' => 1,
+  );
+  menu_link_save($menuitem);
+
+  $menuitem = array(
+    'link_path' => drupal_get_normal_path('user'),
+    'mlid' => 13,
+    'hidden' => 1,
+  );
+  menu_link_save($menuitem);
+
+  // We need a menu_cache_clear here.
+  menu_cache_clear_all();
+
+  // Add OpenLucius Todo's status.
+  $vocabulary = taxonomy_vocabulary_machine_name_load('labels_todo_s');
+
+  // Created 'Open' term.
+  $term1 = (object) array(
+    'name' => 'Open',
+    'description' => 'OpenLucius core status, do not remove',
+    'vid' => $vocabulary->vid,
+  );
+
+  taxonomy_term_save($term1);
+
+  // Set var, so when can use  it to prevent it from being removed.
+  variable_set('todo_openstatus_tid', $term1->tid);
+
+  // Created 'closed' term.
+  $term2 = (object) array(
+    'name' => 'Closed',
+    'description' => 'OpenLucius core status, do not remove',
+    'vid' => $vocabulary->vid,
+  );
+
+  taxonomy_term_save($term2);
+
+  // Set var, so when can use  it to prevent it from being removed.
+  variable_set('todo_closedstatus_tid', $term2->tid);
+
+  // Revert features to ensure they are all installed.
+  $features = array(
+    'openlucius_core_2',
+    'openlucius_permissions',
+    'openlucius_variables',
+    'openlucius_core',
+  );
+  features_revert($features);
+
+  // Ignore any other install messages.
+  drupal_get_messages();
+
+  // This is not a var, so custom query needed to set right view.
+  db_update('search_autocomplete_forms"')
+    ->fields(array('data_callback' => 'autocomplete-nodes-users?filter='))
+    ->condition('fid', 3)
+    ->condition('title', 'Search Block')
+    ->execute();
+  // Add the default homepage, this is not in a feature.
+  variable_set('site_frontpage', 'recent-stuff');
+}

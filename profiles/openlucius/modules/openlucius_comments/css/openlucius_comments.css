@@ -1,0 +1,17 @@
+.page-comment-edit #comment-form .form-todo-list-wrapper,
+.page-comment-edit #comment-form .form-todo-label-wrapper,
+.page-comment-edit #comment-form .form-todo-user-wrapper,
+.page-comment-edit #comment-form .form-todo-due-date-wrapper {
+  float: left;
+  width: 23.76%;
+  margin: 0 10px 15px 0;
+}
+.page-comment-edit #comment-form .form-todo-list-wrapper select,
+.page-comment-edit #comment-form .form-todo-label-wrapper select,
+.page-comment-edit #comment-form .form-todo-user-wrapper .form-item-field-todo-user-reference,
+.page-comment-edit #comment-form .form-todo-user-wrapper .form-item-field-todo-user-reference select,
+.page-comment-edit #comment-form .form-todo-due-date-wrapper #edit-field-todo-due-date-singledate,
+.page-comment-edit #comment-form .form-todo-due-date-wrapper #edit-field-todo-due-date-singledate .form-type-textfield,
+.page-comment-edit #comment-form .form-todo-due-date-wrapper #edit-field-todo-due-date-singledate .form-type-textfield .form-control {
+  width: 100%;
+}

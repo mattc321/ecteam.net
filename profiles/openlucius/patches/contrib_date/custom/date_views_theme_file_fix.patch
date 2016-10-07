@@ -1,0 +1,15 @@
+diff --git a/profiles/openlucius/modules/contrib/date/date_views/theme/theme.inc b/profiles/openlucius/modules/contrib/date/date_views/theme/theme.inc
+index 8c42a52..cb01e32 100644
+--- a/profiles/openlucius/modules/contrib/date/date_views/theme/theme.inc
++++ b/profiles/openlucius/modules/contrib/date/date_views/theme/theme.inc
+@@ -165,8 +165,8 @@ function theme_date_nav_title($params) {
+   $date_info = $view->date_info;
+   $link = !empty($params['link']) ? $params['link'] : FALSE;
+   $format = !empty($params['format']) ? $params['format'] : NULL;
+-  $format_with_year = variable_get('date_views_' . $granularity . 'format_with_year', 'l, F j, Y');
+-  $format_without_year = variable_get('date_views_' . $granularity . 'format_without_year', 'l, F j');
++  $format_with_year = variable_get('date_views_' . $granularity . '_format_with_year', 'l, F j, Y');
++  $format_without_year = variable_get('date_views_' . $granularity . '_format_without_year', 'l, F j');
+   switch ($granularity) {
+     case 'year':
+       $title = $date_info->year;

@@ -1,0 +1,64 @@
+/* Page header color */
+h1.page-header {
+  color: #e8d069;
+}
+/* Front page badge (circle) color */
+.btn-default .badge {
+  background-color: #ad1d28;
+}
+/* Agenda item title */
+.calendar-calendar .field-content a,
+.node-type-ol-text-document .region-content.well {
+  color: #000;
+}
+/* Front page text documents title */
+.view-text-documents-in-a-group .views-field-title a,
+ul.custom-select li,
+.page-all-text-documents .view-text-documents-in-a-group a,
+.page-groups .views-field-title h4,
+.view-users-in-groups .views-field-edit-node a,
+.view-users-in-groups .views-field-name a {
+  /* Red color */
+  color: #911821;
+}
+/* Yellow color for links */
+table.views-table .ol-goupmessages a,
+.view-todos-in-group-dashboard .views-table h5,
+.view-todos-in-group-dashboard .views-table h5 a,
+.view-todos-in-group-dashboard .views-table tbody a,
+#block-openlucius_files-ol-group-files a,
+.view-text-documents-in-a-group .views-table a,
+table td .glyphicon,
+.page-user-dashboard h2.block-title,
+#block-openlucius_files-ol-user-files th,
+.view-messages-in-a-group th a,
+.view-all-todo-lists-in-a-group th a,
+.page-all-files th {
+  /* Yellow color */
+  color: #e8d069;
+}
+/* Front page search field */
+input[type="text"] {
+  height: 33px;
+}
+/* Links in text documents on front page */
+.page-user-dashboard .view-text-documents-in-a-group a {
+  color: #911821 !important;
+}
+/* Top of the page border */
+#page-header .field-type-node-reference a {
+  border: 1px solid #0a565c;
+}
+/* Search bar in navbar */
+.ui-autocomplete-input,
+.input-group-btn .btn-default {
+  height: 39px !important;
+}
+.view-dashboard-blocks .views-table {
+  background-color: #108a93;
+  border: 1px solid #108a93;
+  border-right: 1px solid #108a93;
+  border-bottom: 1px solid #108a93;
+  -webkit-box-shadow: 2px 2px 2px #108a93;
+  box-shadow: 2px 2px 2px #108a93;
+}

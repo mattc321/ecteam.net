@@ -1,0 +1,11 @@
+name = Features Date Formats
+description = Adds Date Formats support to features
+package = Features
+core = 7.x
+dependencies[] = features
+
+; Information added by drush on 2015-06-13
+version = "unknown"
+project = "features_date_formats"
+datestamp = "1434198839"
+

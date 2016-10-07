@@ -1,0 +1,22 @@
+/* Blue color */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+table th,
+table th a,
+table tr .glyphicon {
+  color: #007fff;
+}
+
+.page-all-users .views-exposed-form .form-submit {
+  margin-top: 0;
+}

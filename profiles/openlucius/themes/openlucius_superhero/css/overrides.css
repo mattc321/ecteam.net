@@ -1,0 +1,65 @@
+/* Search bar in navbar */
+.ui-autocomplete-input,
+.input-group-btn .btn-default {
+  height: 30px !important;
+}
+#search-block-form .glyphicon-search {
+  top: 0;
+}
+/* Thick border */
+.region-content .views-exposed-form {
+  border-bottom: 10px solid #345;
+}
+.form-type-textfield input[type="text"] {
+  height: 33px;
+}
+/* Table odd rows background gray */
+.view-messages-in-a-group tr.odd,
+.view-all-todo-lists-in-a-group tr.odd,
+.view-todos-on-todo-list-page tr.odd,
+#block-openlucius_files-ol-group-files tr.odd td,
+.view-todos-in-group-dashboard tr.odd,
+#block-openlucius_core-ol-group-heading .content a {
+  background-color: #485563;
+}
+/* Top of the page links (with badges with numbers). */
+#block-openlucius_core-ol-group-heading .content a:hover {
+  background-color: #4e5d6c;
+}
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+  color: #000;
+}
+/* Break field to under content */
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+.node-type-ol-text-document .content,
+ul.custom-select li,
+.calendar-calendar .field-content a {
+  color: #000;
+}
+.node-type-ol-todo #comments input[type="text"] {
+  height: 39px !important;
+  max-height: 39px !important;
+}
+.view-id-dashboard_blocks .table {
+  background-color: #485563;
+  border: 1px solid #4e5d6c;
+  border-right: 1px solid #4e5d6c;
+  border-bottom: 1px solid #4e5d6c;
+  -webkit-box-shadow: 2px 2px 2px #4e5d6c;
+  box-shadow: 2px 2px 2px #4e5d6c;
+}
+/* User info on his/her dashboard */
+.view-id-dashboard_blocks .table > thead > tr > th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #4e5d6c;
+}

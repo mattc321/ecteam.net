@@ -1,0 +1,409 @@
+<?php
+/**
+ * @file
+ * Typical module file.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function box_view_init() {
+  // Load the library which will initialize the Box_View_API class.
+  libraries_load('box-view-api');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function box_view_menu() {
+  $items['admin/config/services/box/view'] = array(
+    'title' => 'Box View API',
+    'type' => MENU_NORMAL_ITEM,
+    'description' => 'Modify settings for the Block View API.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('box_view_admin_form'),
+    'access arguments' => array('admin box_view'),
+    'file' => 'box_view.admin.inc',
+  );
+  $items['box_view/view/%'] = array(
+    'title' => 'Box View',
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(2),
+    'page callback' => 'box_view_callback_view',
+    'access arguments' => array('view box_view documents'),
+  );
+  $items['box_view/download/%'] = array(
+    'title' => 'Box View',
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(2),
+    'page callback' => 'box_view_callback_download',
+    'access arguments' => array('download box_view documents'),
+  );
+  $items['box_view/download/%/pdf'] = array(
+    'title' => 'Box View',
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(2),
+    'page callback' => 'box_view_callback_download_pdf',
+    'access arguments' => array('download box_view documents'),
+  );
+  $items['box_view/download/%/zip'] = array(
+    'title' => 'Box View',
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(2),
+    'page callback' => 'box_view_callback_download_zip',
+    'access arguments' => array('download box_view documents'),
+  );
+  $items['box_view/delete/%'] = array(
+    'title' => 'Box View',
+    'type' => MENU_CALLBACK,
+    'page arguments' => array(2),
+    'page callback' => 'box_view_callback_delete',
+    'access arguments' => array('delete box_view documents'),
+  );
+  return $items;
+}
+
+/**
+ * Callback page to view a document.
+ */
+function box_view_callback_download_zip($id) {
+  $doc = box_view_document(array('id' => $id));
+  box_view_api_get_original($doc);
+  // Get metadata to try and get the name.
+  box_view_api_metadata($doc);
+  $doc_name = ($doc->name ? : 'Document-' . substr($doc->id, 0, 6)) . '.zip';
+  // Set zip file headers.
+  drupal_add_http_header('Content-Description', 'File Transfer');
+  drupal_add_http_header('Content-type', 'application/octet-stream');
+  drupal_add_http_header('Content-Disposition', 'attachment; filename="' . $doc_name . '"');
+  drupal_add_http_header('Content-Transfer-Encoding', 'binary');
+  // Send the zip binary data.
+  print $doc->content->zip;
+}
+
+/**
+ * Callback page to view a document.
+ */
+function box_view_callback_download_pdf($id) {
+  $doc = box_view_document(array('id' => $id));
+  box_view_api_get_pdf($doc);
+  // Get metadata to try and get the name.
+  box_view_api_metadata($doc);
+  $doc_name = ($doc->name ? : 'Document-' . substr($doc->id, 0, 6)) . '.pdf';
+  drupal_add_http_header('Content-type', 'application/pdf');
+  drupal_add_http_header('Content-Disposition', 'attachment; filename="' . $doc_name . '"');
+  print $doc->content->pdf;
+}
+
+/**
+ * Callback page to view a document.
+ */
+function box_view_callback_download($id) {
+  $doc = box_view_document(array('id' => $id));
+  box_view_api_get_original($doc);
+  // Get metadata to try and get the name.
+  box_view_api_metadata($doc);
+  $doc_name = ($doc->name ? : 'Document-' . substr($doc->id, 0, 6));
+  header('Content-Disposition: attachment; filename=' . $doc_name);
+  print $doc->content->original;
+}
+
+/**
+ * Callback page to view a document.
+ */
+function box_view_callback_view($id) {
+  $doc = box_view_document(array('id' => $id));
+  box_view_api_view($doc);
+  $doc_name = $doc->name ? : 'View Document';
+  // Really simple HTML page for viewing documents.
+  print '<html><head><title>' . $doc_name . '</title></head>
+  <body style="margin:0px;padding:0px;overflow:hidden">
+           <iframe src="' . $doc->session->url . '" width="100%" height="100%"></frame>
+         </body></html>';
+}
+
+/**
+ * Callback to delete a document in the Box View API.
+ */
+function box_view_callback_delete($id) {
+  $doc = box_view_document(array('id' => $id));
+  if (box_view_api_delete($doc)) {
+    print 'okay';
+    if ($destination = $_GET['destination']) {
+      drupal_goto($destination);
+    }
+  }
+  else {
+    print 'error';
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function box_view_permission() {
+  return array(
+    'view box_view documents' => array(
+      'title' => t('View Box View Documents'),
+      'description' => t('Allows users to view documents using the Box View API.'),
+    ),
+    'download box_view documents' => array(
+      'title' => t('Download Box View Documents'),
+      'description' => t('Allows users to download documents in a PDF or Zip archive.'),
+    ),
+    'delete box_view documents' => array(
+      'title' => t('Delete Box View Documents'),
+      'description' => t('Allows users to delete documents that are in the Box View API.'),
+    ),
+    'admin box_view' => array(
+      'title' => t('Administer Box View Settings'),
+      'description' => t('Allows users to modify Box View API settings.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function box_view_libraries_info() {
+  $libraries['box-view-api'] = array(
+    'name' => 'Box View API',
+    'vendor url' => 'https://github.com/donutdan4114/box-view-api',
+    'download url' => 'https://github.com/donutdan4114/box-view-api/archive/1.0.zip',
+    'path' => 'lib',
+    'version' => 1,
+    'files' => array(
+      'php' => array(
+        'box-view-api.php',
+        'box-view-document.php',
+      ),
+    ),
+    'integration files' => array(
+      'box_view' => array(
+        'php' => array(
+          'box-view-api.php',
+          'box-view-document.php',
+        ),
+      ),
+    ),
+    'callbacks' => array(
+      // Called after the library is loaded.
+      'post-load' => array(
+        'box_view_api_instantiate',
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+/**
+ * Callback when the library is loaded.
+ */
+function box_view_api_instantiate() {
+  global $_box_view_api;
+  $_box_view_api = new Box_View_API(variable_get('box_view_api_key', ''));
+}
+
+/**
+ * Returns a new instance of Box_View_Document.
+ */
+function box_view_document(array $params = array()) {
+  return new Box_View_Document($params);
+}
+
+/**
+ * Wrapper for Box_View_API::getOriginal().
+ */
+function box_view_api_get_original(Box_View_Document &$doc) {
+  return box_view_api('getOriginal', $doc);
+}
+
+/**
+ * Wrapper for Box_View_API::getPDF().
+ */
+function box_view_api_get_pdf(Box_View_Document &$doc) {
+  return box_view_api('getPDF', $doc);
+}
+
+/**
+ * Wrapper for Box_View_API::getZip().
+ */
+function box_view_api_get_zip(Box_View_Document &$doc) {
+  return box_view_api('getZip', $doc);
+}
+
+/**
+ * Wrapper for Box_View_API::view().
+ */
+function box_view_api_view(Box_View_Document &$doc) {
+  // Need to see if we have cached this $doc session.
+  $cache = cache_get('box_view_' . $doc->id);
+  if ($cache && ($cache->expire > REQUEST_TIME)) {
+    $doc = unserialize($cache->data);
+    return $doc;
+  }
+  box_view_api('view', $doc);
+  // Get the other metadata for this document.
+  box_view_api_metadata($doc);
+  // Cache this result so we don't recreate view sessions when we don't need to.
+  $expire = strtotime($doc->session->expires_at);
+  cache_set('box_view_' . $doc->id, serialize($doc), 'cache', $expire);
+  return $doc;
+}
+
+/**
+ * Wrapper for Box_View_API::getMetaData().
+ */
+function box_view_api_metadata(Box_View_Document &$doc) {
+  return box_view_api('getMetaData', $doc);
+}
+
+/**
+ * Wrapper for Box_View_API::load().
+ */
+function box_view_api_load(array $params = array()) {
+  return box_view_api('load', $params);
+}
+
+/**
+ * Wrapper for Box_View_API::update().
+ */
+function box_view_api_update(Box_View_Document &$doc) {
+  return box_view_api('update', $doc);
+}
+
+/**
+ * Wrapper for Box_View_API::delete().
+ */
+function box_view_api_delete(Box_View_Document &$doc) {
+  $path = $doc->file_path ? : $doc->file_url;
+  // Remove the saved entry from the database.
+  db_delete('box_view_documents')->condition('path', md5($path))->execute();
+  return box_view_api('delete', $doc);
+}
+
+/**
+ * Wrapper for Box_View_API::deleteMultiple().
+ */
+function box_view_api_delete_multiple(array &$docs) {
+  return box_view_api('deleteMultiple', $docs);
+}
+
+/**
+ * Wrapper for Box_View_API::uploadMultiple().
+ */
+function box_view_api_upload_multiple(array &$docs) {
+  return box_view_api('uploadMultiple', $docs);
+}
+
+/**
+ * Wrapper for Box_View_API::upload().
+ */
+function box_view_api_upload(Box_View_Document &$doc) {
+  $result = box_view_api('upload', $doc);
+  box_view_save_document($doc);
+  return $result;
+}
+
+/**
+ * Fetches one saved Box_View_Document from the database.
+ *
+ * @param array $conditions
+ *   An array of database conditions to select a unique document.
+ *   Example: array('path' => 'path/to/my/document')
+ *
+ * @return mixed
+ *   Returns a single result from the database.
+ */
+function box_view_get_document(array $conditions = array()) {
+  $results = box_view_get_documents($conditions);
+  // Return only one result.
+  return array_shift($results);
+}
+
+/**
+ * Fetches saved Box_View_Documents from the database.
+ *
+ * @param array $conditions
+ *   An array of database conditions to select documents.
+ *   Example: array('path' => 'path/to/my/document')
+ *
+ * @return mixed
+ *   Returns an array of rows fetched from the database.
+ */
+function box_view_get_documents(array $conditions = array()) {
+  $query = db_select('box_view_documents', 'b')->fields('b');
+  foreach ($conditions as $col => $val) {
+    if ($col === 'path') {
+      $val = md5($val); // Need to hash "path" value to match what's stored in the database.
+    }
+    $query->condition($col, $val);
+  }
+  $rows = $query->execute()->fetchAll();
+  foreach ($rows as &$row) {
+    // Convert the serialize document into a usable object.
+    $row->document = unserialize($row->document);
+  }
+  return $rows;
+}
+
+/**
+ * Saves a Box_View_Document to the database to keep track of document IDs.
+ *
+ * @param Box_View_Document $doc
+ *
+ * @return int
+ *   Result from the db_merge query.
+ */
+function box_view_save_document(Box_View_Document &$doc) {
+  // Gets the path to this document. Paths are either file_path or file_url.
+  // We hash the path to make sure we can store a path of any length in our column.
+  $path = md5($doc->file_path ? : $doc->file_url);
+  return db_merge('box_view_documents')
+    ->key(array('path' => $path, 'document_id' => $doc->id))
+    ->fields(array(
+      'document_id' => $doc->id,
+      'document' => serialize($doc),
+    ))
+    ->execute();
+}
+
+/**
+ * Simple wrapper for the boxAPI Box_View_API object.
+ *
+ * This method ensure that Drupal hooks/alters are called before an after every API call.
+ * Never interact directly with the $_box_view_api object, use this wrapper.
+ *
+ * For developers, this function should not be called directly.
+ * Since a different library may be used in the future, it is recommended
+ * to use the method-specific box_view_api_{method} functions.
+ *
+ * Note: We need to pass each argument ($arg1, $arg2, etc...) by reference.
+ *       Cannot be 100% dynamic when passing by reference.
+ *
+ * So instead of using:
+ *   box_view_api('upload', $doc);
+ * Use this:
+ *   box_view_api_upload($doc);
+ */
+function box_view_api($method, &$arg1 = NULL, &$arg2 = NULL, &$arg3 = NULL, &$arg4 = NULL) {
+  global $_box_view_api;
+  // Get all the arguments that are being passed to the API call.
+  $args = array_filter(array(&$arg1, &$arg2, &$arg3, &$arg4));
+  // Allow anyone to alter API method arguments.
+  drupal_alter(array('box_view_api', 'box_view_api_' . $method), $args);
+  // Fire a hook before we make the API call.
+  module_invoke_all('box_view_api_call', array('method' => $method, 'args' => $args));
+  // Get the response by firing the API call.
+  try {
+    $response = call_user_func_array(array($_box_view_api, $method), $args);
+  } catch (Exception $e) {
+    watchdog('box_view', $e->getCode() . ': ' . $e->getMessage(), array(), WATCHDOG_ERROR);
+    $response = FALSE;
+  }
+  // Allow anyone to alter an API response.
+  drupal_alter(array('box_view_api_response', 'box_view_api_response_' . $method), $response);
+  // Hook into an API call after it has finished.
+  module_invoke_all('box_view_api_call_finished', array('method' => $method, 'args' => $args, 'response' => $response));
+  return $response;
+}

@@ -1,0 +1,31 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function ec_box_field_schema($field) {
+  $columns = array(
+    'linkshare' => array(
+      'type' => 'varchar',
+      'length' => 128,
+      'not null' => FALSE,
+    ),
+    'label' => array(
+      'type' => 'varchar',
+      'length' => 128,
+      'not null' => FALSE,
+    ),
+  );
+
+  $indexes = array(
+    'linkshare' => array('linkshare'),
+  );
+
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+  );
+}

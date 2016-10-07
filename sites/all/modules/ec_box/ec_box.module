@@ -1,0 +1,260 @@
+<?php
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_field_info().
+ */
+function ec_box_field_info() {
+  return array(
+    'file_browser' => array( 
+      'label' => t('Box File Browser'),
+      'description' => t('Embeds a Box file browser into node.'),
+      'default_widget' => 'box_embedded',
+      'default_formatter' => 'linkshare_raw',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function ec_box_field_widget_info() {
+  return array(
+    'box_embedded' => array(
+      'label' => t('Embedded'),
+      'field types' => array('file_browser'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function ec_box_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+
+  if ($field['cardinality'] == 1) {
+    $element['#type'] = 'fieldset';
+  }
+
+  $element['linkshare'] = array( 
+    '#type' => 'textfield',
+    '#field_prefix' => t('Share Link:'),
+    '#size' => 128,
+	'#description' => t('The default folder to display. Use the share link, not the embed code.'),
+    '#default_value' => isset($items[$delta]['linkshare']) ? $items[$delta]['linkshare'] : '',
+  );
+//the label element was also in here. removed.
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+ // function ec_box_field_widget_settings_form($field, $instance) {
+   // $element = array(
+     // 'box_def_link' => array( 
+       // '#type' => 'textfield',
+       // '#title' => t('Default Share Folder'),
+	   // '#required' => true,
+       // '#description' => t('This is the fall back default folder to use if no share link is provided for the node.'),
+       // '#default_value' => isset($instance['widget']['settings']['box_def_link']) ? $instance['widget']['settings']['box_def_link'] : '',
+     // ),
+   // );
+
+   // return $element;
+ // }
+
+/**
+ * Implementation of hook_field_is_empty().
+ */
+function ec_box_field_is_empty($item, $field) {
+  if (empty($item['linkshare'])) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_field_validate(). Currently no validation rules
+ */
+function ec_box_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+   foreach($items as $delta => $item) {
+     if (!empty($item['linkshare'])) {
+       // Make sure it's less than 128 characters.
+	   if (drupal_strlen($item['linkshare']) > 128) {
+         $errors[$field['field_name']][$langcode][$delta][] = array(
+           'error' => 'sharelink_length',
+           'message' => t('%name: The share link cannot be more than 128 characters', array('%name' => $instance['label'])),
+         );
+       }
+	 }
+   }
+ }
+// $page['region'] = array(
+    // '#type' => 'markup',
+    // '#markup' => t('markup here'),
+// );
+/**
+ * Implements hook_field_formatter_info().
+ */
+function ec_box_field_formatter_info() {
+  return array(
+    'linkshare_raw' => array(
+      'label' => t('Raw Box share link value'),
+      'field types' => array('file_browser'),
+    ),
+    'browser' => array(
+      'label' => t('Embedded Browser'),
+      'field types' => array('file_browser'),
+      'settings' => array(
+        'width' => 700,
+        'height' => 300,
+		'def_sort' => 'name',
+		'def_theme' => 'blue',
+		'def_view' => 'icon',
+		'def_class' => '',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function ec_box_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, &$items, $display) {
+  $settings = $display['settings'];
+  $element = array();
+
+  switch ($display['type']) {
+    case 'linkshare_raw':
+      foreach ($items as $key => $value) {
+        $element[$key] = array(
+          '#type' => 'markup',
+          '#markup' => '<div class="ec_box_link"><a href="' . $value['linkshare'] . '" target="_blank">' . $value['linkshare'] . '</a></div>',
+        );
+      }
+      break;
+
+    case 'browser':
+	 
+      foreach ($items as $key => $value) {
+			
+		  //view: list, icon
+		  //theme: blue, gray
+		  //default sort:name, date, size + ASC OR DESC
+		  //we only want the last part of the share link. We could also just do this in validation but it doesnt matter
+		$yeababy = explode('/', $value['linkshare']);
+		$linkcode = end($yeababy);
+		$finalink = "https://app.box.com/embed_widget/s/";
+		$finalink .= $linkcode;
+		$defview = check_plain($settings['def_view']);
+		$defsort = check_plain($settings['def_sort']);
+		$theme = check_plain($settings['def_theme']);
+		$finalink .= '?view='.$defview.'&sort='.$defsort.'&direction=ASC&theme='.$theme;
+        $element[$key] = array(
+          '#type' => 'markup',
+		  '#markup' => '<div class="ec_box_browser ' . check_plain($settings['def_class']) . '"><iframe src="' . $finalink . '"
+              width="'. check_plain($settings['width']) .'"
+              height="'. check_plain($settings['height']) .'" frameborder="0" "allowfullscreen webkitallowfullscreen msallowfullscreen" id="box-browser-iframe"></iframe></div>',
+        );
+      }
+      break;
+  }
+
+ return $element;
+}
+ // <iframe src="https://app.box.com/embed_widget/s/zk7nsco7cd24jbr5ha5hmcjvxnxbse72?view=list&sort=name&direction=ASC&theme=blue" width="500" height="400" frameborder="0" allowfullscreen webkitallowfullscreen msallowfullscreen></iframe>
+// '#markup' => '<div class="test2">' . check_plain($value['linkshare']) . '</div>',
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function ec_box_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $instance['display'][$view_mode]['settings'];
+
+  if ($display['type'] == 'browser') {
+    $output = t('Browser size: @widthx@height, sorted by @sort, with @theme theme, and with @view view. Classes @defclass', array('@width' => $settings['width'], '@height' => $settings['height'],'@sort' => $settings['def_sort'],'@view' => $settings['def_view'],'@theme' => $settings['def_theme'], '@defclass' => $settings['def_class']));
+    return $output;
+  }
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function ec_box_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $element = array();
+  if ($display['type'] == 'browser') {
+      $element['width'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Box width'),
+		'#description' => t('You may also use a % for width and height'),
+        '#default_value' => $settings['width'],
+      );
+      $element['height'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Box height'),
+        '#default_value' => $settings['height'],
+      );
+	$element['def_sort'] = array(
+		'#type'           => 'select',                           // Use a select box widget
+		'#title'          => t('Default Sort'),                   // Widget label
+		'#description'    => t('The default sort of browser'), // Helper text
+		'#default_value'  => $settings['def_sort'],              // Get the value if it's already been set
+		'#options'        => array(
+			'name'  => 'Name',
+			'date' => 'Date',
+			'size'  => 'Size',
+		),
+	);
+   $element['def_theme'] = array(
+		'#type'           => 'select',                           // Use a select box widget
+		'#title'          => t('Default Theme'),                   // Widget label
+		'#description'    => t('The theme of the browser'), // Helper text
+		'#default_value'  => $settings['def_theme'],              // Get the value if it's already been set
+		'#options'        => array(
+			'blue'  => 'Blue',
+			'gray' => 'Gray',
+		),
+	);
+	$element['def_view'] = array(
+		'#type'           => 'select',                           // Use a select box widget
+		'#title'          => t('Default View'),                   // Widget label
+		'#description'    => t('List view or Icon view'), // Helper text
+		'#default_value'  => $settings['def_view'],              // Get the value if it's already been set
+		'#options'        => array(
+			'list'  => 'List',
+			'icon' => 'Icon',		
+		),
+	);
+	$element['def_class'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Additional Class'),
+        '#default_value' => $settings['def_class'],
+    );
+  }
+  
+  return $element;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

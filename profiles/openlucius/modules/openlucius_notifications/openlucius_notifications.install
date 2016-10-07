@@ -1,0 +1,83 @@
+<?php
+/**
+ * @file
+ * This file contains the required methods / updates for the install.
+ */
+
+/**
+ * Adds table to keep track of who has been notified.
+ */
+function openlucius_notifications_update_7000() {
+
+  // Check if table exists, if not install the schema.
+  if (db_table_exists('openlucius_notifications') == FALSE) {
+    drupal_install_schema('openlucius_notifications');
+  }
+}
+
+/**
+ * Fixes users field size so it can store more users.
+ */
+function openlucius_notifications_update_7001() {
+
+  // Check if table exists, if not install the schema.
+  if (db_table_exists('openlucius_notifications') == FALSE) {
+    drupal_install_schema('openlucius_notifications');
+  }
+  else {
+
+    // New field spec.
+    $long_text = array(
+      'type' => 'text',
+      'size' => 'big',
+      'not null' => FALSE,
+    );
+
+    // Change the old field to the new specifications.
+    db_change_field('openlucius_notifications', 'users', 'users', $long_text);
+  }
+}
+
+/**
+ * Schema for openlucius notifications.
+ */
+function openlucius_notifications_schema() {
+
+  // Create a new database table schema.
+  $schema['openlucius_notifications'] = array(
+    'description' => 'The base table for the openlucius notifications module.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a notification.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type of notification, node or comment.',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'users' => array(
+        'description' => 'The serialized string of users that have been notified.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array(
+      'id',
+    ),
+    'unique keys' => array(
+      'id' => array(
+        'id',
+      ),
+    ),
+  );
+
+  // Return the schema.
+  return $schema;
+}
+
+

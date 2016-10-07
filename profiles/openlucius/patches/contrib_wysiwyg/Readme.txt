@@ -1,0 +1,2 @@
+- Applied for 'always paste as plain text' in TinyMCE
+- Source: https://drupal.org/comment/7803431#comment-7803431

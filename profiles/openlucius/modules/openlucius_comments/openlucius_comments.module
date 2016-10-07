@@ -1,0 +1,217 @@
+<?php
+/**
+ * @file
+ * This file contains all alters and function related to comments.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function openlucius_comments_init() {
+  drupal_add_css(drupal_get_path('module', 'openlucius_comments') . '/css/openlucius_comments.css');
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function openlucius_comments_form_alter(&$form, &$form_state, $form_id) {
+  // Only comments need extra validation.
+  if (stristr($form_id, 'comment')) {
+
+    // Check comment_alter list set.
+    if (isset($form['comment_alter_field_todo_list_reference'][LANGUAGE_NONE]['#options'])) {
+
+      // Hide this field, and disable just in case.
+      $form['comment_alter_field_todo_list_reference']['#attributes']['style'] = array('display: none;');
+      $form['comment_alter_field_todo_list_reference']['#disabled'] = TRUE;
+    }
+
+    // Add custom validate as the first validate.
+    $form['#submit'] = array_merge(array('openlucius_comments_notify_submit'), $form['#submit']);
+
+    // Do not show these fields if the user is a client.
+    if (openlucius_core_user_is_client()) {
+      $fields = array(
+        'field_todo_due_date_singledate', 'field_todo_label',
+        'field_todo_list_reference', 'field_todo_user_reference',
+        'field_shared_loopin_email', 'field_todo_comm_show_clients',
+        'field_shared_time_maximum',
+      );
+
+      foreach ($fields as $field) {
+        if (isset($form[$field])) {
+          $form[$field]['#access'] = FALSE;
+        }
+      }
+    }
+
+    // Hide field if the node the comment is placed on is not shown to clients.
+    if (isset($form['#node']->field_shared_show_clients[LANGUAGE_NONE][0]['value']) &&
+      $form['#node']->field_shared_show_clients[LANGUAGE_NONE][0]['value'] == 0
+      && isset($form['field_todo_comm_show_clients'])) {
+      unset($form['field_todo_comm_show_clients']);
+    }
+
+    // Get the active menu item.
+    $menu_item = menu_get_item();
+
+    // Check if we're on the edit page.
+    if ($menu_item['page_callback'] == 'comment_edit_page' || $form_state['openlucius_comments']['comment_edit']) {
+
+      // Store this for ajax callbacks.
+      $form_state['openlucius_comments']['comment_edit'] = TRUE;
+
+      // TODO check if we can use the code from the comment_alter module.
+      // Fetch the comment and the node for their values.
+      $node    = $form['#node'];
+
+      // Set group id in variable for readable code.
+      $group_id = $node->field_shared_group_reference[LANGUAGE_NONE][0]['nid'];
+
+      // Add the todolist field.
+      $form['field_todo_list_reference'] = array(
+        '#title' => t('Todo List'),
+        '#type' => 'select',
+        '#options' => openlucius_core_get_lists_in_group($group_id),
+        '#default_value' => $node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'],
+        '#prefix' => '<div class="form-todo-list-wrapper">',
+        '#suffix' => '</div>',
+      );
+
+      // Add the status field.
+      $form['field_todo_label'] = array(
+        '#title' => t('Status'),
+        '#type' => 'select',
+        '#options' => openlucius_core_get_terms('labels_todo_s'),
+        '#default_value' => $node->field_todo_label[LANGUAGE_NONE][0]['tid'],
+        '#prefix' => '<div class="form-todo-label-wrapper">',
+        '#suffix' => '</div>',
+      );
+
+      // Fetch users and add the None option.
+      $users_in_group = openlucius_core_fetch_users('group', $group_id);
+      $options = array('_none' => '- ' . t('None') . ' -');
+
+      // Add those users to the options.
+      foreach ($users_in_group as $entity) {
+        $options[$entity->uid] = $entity->name;
+      }
+
+      // Add the user reference field.
+      $form['field_todo_user_reference'] = array(
+        '#title' => t('Assigned to'),
+        '#type' => 'select',
+        '#options' => $options,
+        '#default_value' => $node->field_todo_user_reference[LANGUAGE_NONE][0]['uid'],
+        '#prefix' => '<div class="form-todo-user-wrapper">',
+        '#suffix' => '</div>',
+      );
+
+      // Add the date field.
+      $form['field_todo_due_date_singledate'] = array(
+        '#title' => t('Due Date'),
+        '#type' => 'date_popup',
+        '#date_timezone' => date_default_timezone(),
+        '#date_format' => 'j F Y',
+        '#date_year_range' => '-3:+3',
+        '#date_label_position' => 'within',
+        '#default_value' => date('Y-m-d H:i:s', $node->field_todo_due_date_singledate[LANGUAGE_NONE][0]['value']),
+        '#prefix' => '<div class="form-todo-due-date-wrapper">',
+        '#suffix' => '</div>',
+      );
+    }
+  }
+}
+
+/**
+ * Custom addition comment submit function.
+ *
+ * Handles preparation for notifications and loopin in comments.
+ */
+function openlucius_comments_notify_submit($form, &$form_state) {
+
+  // First, handle notifications in comments, get the values.
+  $values = $form_state['values'];
+
+  if (isset($values['nid'])) {
+
+    // Build comment array.
+    $comment = array();
+
+    // Get the node.
+    $node = node_load($values['nid']);
+
+    // Check if individual notify isset.
+    if (isset($values['notify_individual'])) {
+      $comment = array(
+        'notify_individual' => $values['notify_individual'],
+      ) + $values['comment_body'][LANGUAGE_NONE][0];
+    }
+
+    // Notify users.
+	// commented by matt 9/25 this is causing errors on other bundles
+    //openlucius_notifications_notify_users($node, $comment);
+
+    // Check for comment edit.
+    if (isset($values['cid'])) {
+
+      // Update the list if needed.
+      if (isset($values['field_todo_list_reference'])) {
+        $node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'] = $values['field_todo_list_reference'];
+      }
+
+      // Update the status if needed.
+      if (isset($values['field_todo_label'])) {
+        $node->field_todo_label[LANGUAGE_NONE][0]['tid'] = $values['field_todo_label'];
+      }
+      // Update the assignee if needed.
+      if (isset($values['field_todo_user_reference'])) {
+        $node->field_todo_user_reference[LANGUAGE_NONE][0]['uid'] = $values['field_todo_user_reference'];
+      }
+
+      // Update the due date if needed.
+      if (isset($values['field_todo_due_date_singledate'])) {
+        $parts = explode('-', $values['field_todo_due_date_singledate']);
+        $node->field_todo_due_date_singledate[LANGUAGE_NONE][0]['value'] = mktime(0, 0, 0, $parts[1], $parts[2], $parts[0]);
+      }
+
+      // Save the node.
+      node_save($node);
+    }
+  }
+
+  // Second, handle loop-in emailing in comments.
+  if (isset($form_state['values']['field_shared_loopin_email'][LANGUAGE_NONE])) {
+
+    // Assign the form_state value to $loopin_mails for easy access.
+    $loopin_mails = $form_state['values']['field_shared_loopin_email'][LANGUAGE_NONE];
+
+    $comment = '';
+    // Get the comment to pass as well.
+    if (isset($form_state['values']['comment_body'][LANGUAGE_NONE][0]['value'])) {
+      $comment = $form_state['values']['comment_body'][LANGUAGE_NONE][0]['value'];
+    }
+
+    // Initialize array.
+    $emails = array();
+
+    // Loop through the $looping_mails fields.
+    foreach ($loopin_mails as $key => $email) {
+      // Skip empty.
+      if (!empty($email) && !is_numeric($key)) {
+        continue;
+      }
+
+      // Check if the value actually is a (valid) email address.
+      if (!user_validate_mail($email['value'])) {
+        // Assign that value to the email array.
+        $emails[] = $email['value'];
+      }
+    }
+
+    // Submit if not empty.
+    if (!empty($emails)) {
+      openlucius_notifications_send_loopin_mails($emails, $comment);
+    }
+  }
+}

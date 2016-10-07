@@ -1,0 +1,84 @@
+#comments h2,
+html .front .view-groups h4,
+ul.custom-select li {
+  color: #000 !important;
+}
+
+.front .views-exposed-widgets input[type="text"] {
+  height: 35px;
+}
+
+/* Thick bar */
+.region-content .views-exposed-form {
+  border-bottom: 10px solid #2b2222;
+}
+
+/* Text documents */
+.node-type-ol-text-document .view-text-documents-in-a-group .views-fluid-grid-item,
+.node-type-ol-text-document .region-content {
+  background-image: url('../../../openlucius/images/ol_paper.jpg');
+  border: 1px solid #cfcfcf;
+  border-right: 1px solid #b7b7b7;
+  border-left: 1px solid #b7b7b7;
+  background-color: #fff6d5;
+}
+
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+}
+
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+
+/* Agenda item title */
+#comments h2,
+html .front .view-groups h4,
+#comments h2,
+html .front .view-groups a:hover,
+.calendar-calendar .field-content a,
+.node-type-ol-text-document .region-content.well {
+  color: #000 !important;
+}
+
+.view-id-dashboard_blocks .table {
+  background-color: #282828;
+  border: 1px solid #413b3b;
+  border-right: 1px solid #282828;
+  border-bottom: 1px solid #282828;
+  -webkit-box-shadow: 2px 2px 2px #413b3b;
+  box-shadow: 2px 2px 2px #413b3b;
+}
+
+/* User info on his/her dashboard */
+.view-id-dashboard_blocks .table > thead > tr > th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #413b3b;
+}
+
+/* Blue color */
+table th,
+table th a {
+  color: #2a9fd6 !important;
+}
+
+/* Form titles */
+.view-actionlink .glyphicon,
+#comments h2.title,
+.node-type-ol-message .ol-content,
+.node-type-ol-message .ol-content .panel-title,
+.node-type-ol-todo .ol-content,
+.node-type-ol-todo .ol-content .panel-title {
+  color: #fff !important;
+}
+
+.node-type-ol-text-document #comments h2 {
+  color: #000 !important;
+}

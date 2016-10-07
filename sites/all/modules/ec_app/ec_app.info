@@ -1,0 +1,21 @@
+name = EC App Module
+description = Primary module collection for Evergreen Certified Web App. This module is required for functionality.
+core = 7.x
+
+files[] = views/handlers/ec_app_handler_field_unit_types_count.inc
+files[] = views/handlers/ec_app_handler_field_next_sv.inc
+files[] = views/handlers/ec_app_handler_field_next_sv_date.inc
+files[] = views/handlers/ec_app_handler_field_display_all_services.inc
+files[] = views/handlers/ec_app_handler_filter_by_assignee.inc
+
+dependencies[] = entityreference
+dependencies[] = field_collection
+dependencies[] = field_collection_table
+dependencies[] = node_reference
+dependencies[] = ctools
+
+; Information added by  packaging script on 2013-12-03
+version = "7.x-1.0"
+core = "7.x"
+project = "ec_app"
+datestamp = "1386094705"

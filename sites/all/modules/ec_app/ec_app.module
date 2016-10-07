@@ -1,0 +1,1697 @@
+<?php
+/**
+ * @file
+ * Module file for custom behaviours and functions used by Evergreen Certified production
+ * Basic hook implementations and helper functions will be found here.
+ *
+ * Combined ec_custom_features with ec_app 6/9/16
+ *
+ */
+ 
+ 
+function ec_app_field_widget_form_alter(&$element, &$form_state, $context) {
+ // dpm($context['instance']['widget']['type']);
+  //imagefield_crop_widget
+  if ($context['field']['type'] == 'image' && $context['instance']['widget']['type'] == 'image_image' && !empty($context['instance']['settings']['alt_field'])) {
+	foreach (element_children($element) as $delta) {
+      $element[$delta]['#process'][] = 'mymodule_field_widget_process';
+    }
+  }
+}
+
+
+function ec_app_rotate_image($fid, $direction, $field_name) {
+  $file = file_load($fid);
+  $img = image_load($file->uri);
+  if ($direction == 'cw') {
+	  $dd = 90;
+  } else {
+	  $dd = -90;
+  }
+  image_rotate($img, $dd, 0x000000);
+  
+  $result = image_save($img);
+
+  if ($result) {
+    $uri = $file->uri;
+    $ext = substr($uri, -3); // Change this if you expect some weird extensions like .jpeg !
+    $new_uri = substr($uri, 0, -4) . '_1' . '.' . $ext;
+    file_move($file, $new_uri);
+   // it is not completely ok to pass php variables into sql just like that, but we do it here since the input is always safe in my case
+    $nid = db_query("SELECT entity_id FROM {field_data_{$field_name}} WHERE {$field_name}_fid=:fid", array(':fid' => $fid))->fetchField();
+	watchdog('ec_app','ran query');
+    db_query("UPDATE {file_managed} SET filesize=:size WHERE fid=:fid", array(':size' => $img->info['file_size'], ':fid' => $fid));
+    db_query("UPDATE {field_data_{$field_name}} SET {$field_name}_width=:width, {$field_name}_height=:height WHERE {$field_name}_fid=:fid LIMIT 1", 
+      array(':width' => $img->info['width'], ':height' => $img->info['height'], ':fid' => $fid));
+    cache_clear_all("field:node:$nid", 'cache_field');
+    drupal_set_message('Image rotated!');
+  }
+
+  if (!empty($_SERVER['HTTP_REFERER'])) {
+    drupal_goto($_SERVER['HTTP_REFERER']);
+  }
+
+} 
+ 
+/**
+ * For custom views fields
+ * Implements hook_views_api().
+ */
+function ec_app_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'ec_app') . '/views',
+  );
+}
+
+/**
+ * 
+ * Returns the NID of the node referencing the task nid that has been given
+ * @param String $taskid
+ *   The task nid is question.
+ * @param String $nodetype
+ *   The computer name of parent content type referencing the nid.
+ * @param String $fieldname
+ *   The name of the task reference field
+ */
+function ec_app_ec_return_project($taskid, $nodetype, $fieldname) {
+		// $taskid = the nid of a task
+		// $nodetype = the node type of the parent node that references that task id
+		// Returns parent nid
+		// field names are field_project_tasks and field_opp_tasks
+		
+			$query = new EntityFieldQuery();
+			$qval = $taskid;
+			$query->entityCondition('entity_type', 'node')
+			->entityCondition('bundle', $nodetype)
+			->propertyCondition('status', NODE_PUBLISHED)
+			->fieldCondition($fieldname, 'target_id', $qval, '=')
+			// ->fieldCondition('field_photo', 'fid', 'NULL', '!=')
+			// ->fieldCondition('field_faculty_tag', 'tid', $value)
+			// ->fieldCondition('field_news_publishdate', 'value', $year . '%', 'like')
+			// ->fieldOrderBy('field_photo', 'fid', 'DESC')
+			// ->range(0, 10)
+			->addMetaData('account', user_load(1)); // Run the query as user 1.
+
+			$result = $query->execute();
+
+			if (isset($result['node'])) {
+				$news_items_nids = array_keys($result['node']);	
+				return $news_items_nids[0];	
+			} else {
+				//If it can't find any nodes referencing that task, return the taskid
+				return $taskid;
+			}
+}
+
+/**
+ * Custom function that copies an @notification comment
+ *  to a new node in the ol_message bundle
+ */
+ function ec_app_add_new_message(&$taginfo){
+	 
+	 // field_tag_content_reference
+	 // field_tag_comment_id
+	 // field_tag_user_reference‎ 
+	 // field_tag_posted_by
+					//dpm $taginfo['puser'];
+					// $taginfo['poster']
+					// $taginfo['unode']
+					// $taginfo['commentid']
+					// $taginfo['commentbody']
+					// $taginfo['subject']
+	
+	 $new_message = null;
+	 $new_message = new stdClass();
+	 $new_message->title = $taginfo['subject'];
+	 $new_message->body[LANGUAGE_NONE][0]['value'] = $taginfo['commentbody'];
+	 $new_message->type = 'ol_message';
+	 $new_message->language = LANGUAGE_NONE;
+	 node_object_prepare($new_message);
+	 $new_message->uid = $taginfo['poster'];
+	 $new_message->status = 1;
+	 $new_message->promote = 0;
+	 $new_message->comment = 1;
+	 $new_message->path['pathauto'] = 1;
+	 $new_message->field_tag_user_reference['und'][0]['uid'] = $taginfo['puser']->uid;
+	 $new_message->field_tag_posted_by[LANGUAGE_NONE][0]['uid'] = $taginfo['poster'];
+	 $new_message->field_tag_content_reference[LANGUAGE_NONE][0]['nid'] = $taginfo['unode'];
+	 $new_message->field_tag_comment_id[LANGUAGE_NONE][0]['value'] = $taginfo['commentid'];
+	  
+	 $new_message = node_submit($new_message);
+	 node_save($new_message);
+	
+	 //watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
+ }
+
+/**
+ * Implements hook_form_comment_form_alter().
+ * Add description to comment form showing users who they can tag
+ */
+function ec_app_form_comment_form_alter(&$form, &$form_state) {
+
+ //get user list
+	$uuusers = entity_load('user');
+
+	foreach ($uuusers as $user_id => $uuser) {
+		
+		if (in_array('assignees', $uuser->roles) && $uuser->status == 1) {
+		$uusernames = $uuser->name . ' ' . $uusernames;
+		}
+	}
+ 
+ 
+ $msg = '<div class="comment-desc">To trigger a notification email to a team member, use @username anywhere in your comment with a space before and after.</br>';
+ $msg.= 'Example: "Hi @sean read this comment."  <span class="userlist"> Users: '.$uusernames;
+ $msg.= '</div>';
+ $form['link'] = array('#markup' => t($msg),
+			'#weight' => '-1',
+			);
+
+//set a hidden field with the project nid supplied by url. This hidden field is used in hook_node_presave
+	if (isset($_GET['pid'])) {
+		$pcid = $_GET['pid'];
+		$form['projectcid'] = array(
+			'#type' => 'hidden',
+			'#title' => t('projectcid'),
+			'#default_value' => $pcid,
+			'#weight' => 1,
+			);
+	}
+
+}
+/**
+ * Implements hook_comment_presave().
+ */
+function ec_app_comment_presave($comment) {
+//When a comment is left on a task, update the parent project or opportunity revision info
+  if ($comment->node_type == 'comment_node_ol_todo') {
+		if (isset($comment->projectcid)){
+		$pcid = $comment->projectcid;
+		$project = node_load($pcid);
+		node_submit($project);
+		node_save($project);
+		}
+  }
+	
+
+}
+/**
+ * Implements hook_comment_insert().
+ *
+ */
+function ec_app_comment_insert($comment) {
+
+// Implements a "tagging" feature. When a user(s) is tagged with @user
+// look that user up and email them the information from that comment and it's parent node
+
+$cbod = $comment->comment_body[LANGUAGE_NONE][0]['value'];
+$str = explode(" ",$cbod);
+
+foreach($str as $k=>$word){
+
+	if(substr($word,0,1)=="@"){
+
+		global $user;
+		$uname = trim(substr($word,1));
+		$puser = user_load_by_name($uname);
+		$poster = $comment->name;
+		$unode = $comment->nid;
+		$pemail = $puser->mail;
+		$lnode = node_load($unode);
+
+		switch ($lnode->type) {
+			case 'ol_todo':
+				$parts  = parse_url($_SERVER["HTTP_REFERER"]);
+				parse_str($parts ['query'], $query);
+				$pp = $query['pid'];
+				
+				
+				if (!empty($pp)){
+					$project = node_load($pp);
+					$builder = node_load($project->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+					
+					$ntitle = $lnode->title.' ('.$project->title.')';
+					$naccount = $builder->title;
+					
+					$values = array(
+					'uemail' => $pemail,
+					'poster' => $poster,
+					'body' => $cbod,
+					'unode' => $unode,
+					'ntitle' => $ntitle,
+					'naccount' => $naccount,
+					);
+				
+				 drupal_mail('ec_app', 'notify_ec_user', $user->mail, 'en', $values, $user->name . ' <' . $user->mail . '>');
+				 $arr_comment = array( 'puser' => $puser,
+					'poster' => $comment->uid,
+					'unode' => $unode,
+					'commentid' => $comment->cid,
+					'commentbody' => $cbod,
+					'subject' => $comment->subject);
+					
+					ec_app_add_new_message($arr_comment);
+				} else {
+					//if pp is empty then we cant get the project nid for some reason. rely on the function to find it
+					$ttid = ec_app_ec_return_project($unode, 'projects', 'field_project_tasks');
+					$project = node_load($ttid);
+					$builder = node_load($project->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+					
+					$ntitle = $lnode->title.' ('.$project->title.')';
+					$naccount = $builder->title;
+					
+					$values = array(
+					'uemail' => $pemail,
+					'poster' => $poster,
+					'body' => $cbod,
+					'unode' => $unode,
+					'ntitle' => $ntitle,
+					'naccount' => $naccount,
+					);
+				
+				 drupal_mail('ec_app', 'notify_ec_user', $user->mail, 'en', $values, $user->name . ' <' . $user->mail . '>');
+				 $arr_comment = array( 'puser' => $puser,
+					'poster' => $comment->uid,
+					'unode' => $unode,
+					'commentid' => $comment->cid,
+					'commentbody' => $cbod,
+					'subject' => $comment->subject);
+					
+					ec_app_add_new_message($arr_comment);
+				}
+			break;
+			case 'projects':
+			case 'opportunities':
+				$ntitle = $lnode->title;
+				$naccount = $lnode->field_account_reference[LANGUAGE_NONE][0]['entity']->title;
+
+				$values = array(
+				'uemail' => $pemail,
+				'poster' => $poster,
+				'body' => $cbod,
+				'unode' => $unode,
+				'ntitle' => $ntitle,
+				'naccount' => $naccount,
+				);
+		
+				drupal_mail('ec_app', 'notify_ec_user', $user->mail, 'en', $values, $user->name . ' <' . $user->mail . '>');
+				$arr_comment = array( 'puser' => $puser,
+					'poster' => $comment->uid,
+					'unode' => $unode,
+					'commentid' => $comment->cid,
+					'commentbody' => $cbod,
+					'subject' => $comment->subject);
+					
+					ec_app_add_new_message($arr_comment);
+			break;
+			
+		}	
+	}
+  }
+// END TAGGING----------------------
+
+  //redirect after posting a reply or a normal comment
+	if (strpos($_SERVER['REQUEST_URI'],'reply')) {
+		//blank, comment, reply, node id, comment id
+		$pieces = explode('/',$_SERVER['REQUEST_URI']);
+		$pnode = $pieces[3];
+		$commentid = $pieces[4];
+		$alias = drupal_get_path_alias('node/'.$pnode);
+		
+		$options = array(
+		'absolute' => TRUE,
+		'query' => array('#' => 'comment-'.$commentid)
+		);
+		
+		$redirect = url($alias, $options);
+
+		drupal_goto($alias, 
+		array( 
+		'fragment' => 'comment-'.$commentid,
+		'alias' => TRUE ));
+		
+	} else {
+		$pcid=$comment->projectcid;
+	
+		$newurl = $_SERVER['HTTP_REFERER'];
+		drupal_goto($newurl);
+	}
+}
+
+/**
+ * Implements hook_mail().
+ *
+ */
+function ec_app_mail ($key, &$message, $params) {
+	if($key ==  'notify_ec_user') {
+		$message['to'] = $params['uemail'];
+		$message['subject'] = t('Comment Tag: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
+		$message['body'][] = t('Posted by: @who', array('@who' => $params['poster']));
+		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
+		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
+		$message['body'][] = t('Comment: @cbod', array('@cbod' => $params['body']));
+		$message['body'][] = t('Go here to view: http://ecteam.net/node/@unode', array('@unode' => $params['unode']));
+	}
+	if($key ==  'notify_assignee') {
+	  //dpm('test');
+		$message['to'] = $params['uemail'];
+		$message['subject'] = t('A task was assigned to you: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
+		$message['body'][] = t('@who has assigned a task to you: @ttitle', array('@who' => $params['poster'], '@ttitle' => $params['ttitle']));
+		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
+		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
+		$message['body'][] = t('Go here to view: https://ecteam.net/@unode', array('@unode' => $params['unode']));
+	}
+	if($key ==  'notify_ec_user_2') {
+		$message['to'] = $params['uemail'];
+		$message['subject'] = t('A task was assigned to you: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
+		$message['body'][] = t('@who has assigned a task to you: @ttitle', array('@who' => $params['poster'], '@ttitle' => $params['ttitle']));
+		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
+		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
+		$message['body'][] = t('Go here to view: https://ecteam.net/@unode', array('@unode' => $params['unode']));
+
+  }
+}
+/**
+ * Custom function to closes all tasks for
+ *	project or opporunity.
+ *
+ */
+function ec_app_close_all_tasks($node) {
+	
+	if (empty($node)) { return false;}
+	
+	$node = node_load($node);
+	
+	if ($node->type == 'projects') {
+		foreach ($node->field_project_tasks[LANGUAGE_NONE] as $key => $task) {
+			$loaded_task = node_load($task['target_id']);
+			$loaded_task->field_todo_label[LANGUAGE_NONE][0]['tid'] = 2; //1 = open 2 = closed
+			node_save($loaded_task);
+		}
+		return true;
+	} elseif ($node->type == 'opportunities') {
+		foreach ($node->field_opp_tasks[LANGUAGE_NONE] as $key => $task) {
+			$loaded_task = node_load($task['target_id']);
+			$loaded_task->field_todo_label[LANGUAGE_NONE][0]['tid'] = 2; //1 = open 2 = closed
+			node_save($loaded_task);
+		}
+		return true;
+	} else {
+		return false;
+	}
+	
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ */
+function ec_app_node_insert($node) {
+
+switch ($node->type) {
+	case 'ol_todo':
+		//append new task to project entity reference
+		if(isset($_GET['proj'])){
+		  $projid = $_GET['proj'];
+		  $nodeproj = node_load($projid);
+		  $nodeproj->field_project_tasks['und'][]['target_id'] = $node->nid;
+		  node_save ($nodeproj);
+		  $alias = drupal_get_path_alias('node/'.$projid);
+			 
+			//notify task assignee
+			if (isset($node->notifyassignee) && $node->notifyassignee == true) {
+				$pnode = ec_app_ec_return_project($node->nid, 'projects', 'field_project_tasks');
+				
+				//if it couldnt find the project, try looking for an opportunity
+				if($pnode == $node->nid) { $pnode = ec_app_ec_return_project($node->nid, 'opportunities', 'field_opp_tasks'); }
+				
+				// if they aren't equal, then it found something
+				if($pnode != $node->nid) {
+					$puser = user_load($node->field_todo_user_reference[LANGUAGE_NONE][0]['uid']);
+					$poster = $user->name;
+					$unode = drupal_get_path_alias('node/'.$node->nid);
+					$pemail = $puser->mail;
+			
+					$lnode = node_load($pnode);
+					
+					$ntitle = $lnode->title;
+					$laccount = node_load($lnode->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+					$naccount = $laccount->title;
+			
+					$values = array(
+					'uemail' => $pemail,
+					'ttitle' => $node->title,
+					'poster' => $poster,
+					'unode' => $unode,
+					'ntitle' => $ntitle,
+					'naccount' => $naccount,
+					);
+					drupal_mail('ec_app', 'notify_assignee', $user->mail, 'en', $values, $user->name . ' <webmaster@ecteam.net>');
+				}
+			}
+			 
+		 // drupal_goto($alias,
+		 // array(
+		  // 'fragment' => 'task-view-block',
+		  // 'alias' => TRUE ));	   
+		} //end if isset proj
+		
+		//append new task to opportunity entity ref
+		if(isset($_GET['opp'])){
+		  $oppid = $_GET['opp'];
+		  $nodeopp = node_load($oppid);
+		  $nodeopp->field_opp_tasks['und'][]['target_id'] = $node->nid;
+		  node_save ($nodeopp);
+		  
+		  $alias = drupal_get_path_alias('node/'.$oppid);
+		
+		//notify task assignee
+		
+			if (isset($node->notifyassignee) && $node->notifyassignee == true) {
+				
+				
+				$pnode = ec_app_ec_return_project($node->nid, 'projects', 'field_project_tasks');
+				
+				if($pnode == $node->nid) { $pnode = ec_app_ec_return_project($node->nid, 'opportunities', 'field_opp_tasks'); }
+				
+				if($pnode != $node->nid) {
+				
+					$puser = user_load($node->field_todo_user_reference[LANGUAGE_NONE][0]['uid']);
+					$poster = $user->name;
+					$unode = drupal_get_path_alias('node/'.$node->nid);
+					$pemail = $puser->mail;
+			
+					$lnode = node_load($pnode);
+					
+					$ntitle = $lnode->title;
+					$laccount = node_load($lnode->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+					$naccount = $laccount->title;
+			
+					$values = array(
+					'uemail' => $pemail,
+					'ttitle' => $node->title,
+					'poster' => $poster,
+					'unode' => $unode,
+					'ntitle' => $ntitle,
+					'naccount' => $naccount,
+					);
+
+					drupal_mail('ec_app', 'notify_assignee', $user->mail, 'en', $values, $user->name . ' <webmaster@ecteam.net>');
+				}
+			}
+			   // drupal_goto($alias,
+				// array(
+				// 'fragment' => 'task-view-block',
+				// 'alias' => TRUE ));
+		}	
+	break;
+	
+	case 'projects':
+		//updates an opportunity with a reference to its project
+		if(!empty($node->field_opportunities[LANGUAGE_NONE][0]['nid'])) {
+		  $oppid = node_load($node->field_opportunities[LANGUAGE_NONE][0]['nid']);
+		  $oppid->field_project_reference[LANGUAGE_NONE][0]['target_id'] = $node->nid;
+		  node_save($oppid);
+		}
+		
+	break;
+	case 'service_task':
+		//updates a service with its auto task
+		if(!empty($node->field_service[LANGUAGE_NONE][0]['target_id'])) {
+			$servicenode = node_load($node->field_service[LANGUAGE_NONE][0]['target_id']);
+			$servicenode->field_service_tasks[LANGUAGE_NONE][]['target_id'] = $node->nid;
+			$servicetitle = $servicenode->title;
+			node_save($servicenode);
+			drupal_set_message(t('This auto task has been added to '.$servicetitle), 'status');
+		}
+	break;
+ }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ */
+function ec_app_form_alter(&$form, &$form_state, $form_id) {
+ 	$path = drupal_get_path('module', 'ec_app');
+	drupal_add_js ("$path/ec_app.js");
+
+	switch ($form_id) {
+	case 'views_exposed_form':
+		if (isset($form['field_project_status_tid'])) {
+			$form['field_project_status_tid_op']['#options']['or'] = 'Equals';
+			$form['field_project_status_tid_op']['#options']['not'] = 'Does not equal';
+			unset($form['field_project_status_tid_op']['#options']['and']);
+			unset($form['field_project_status_tid_op']['#options']['empty']);
+			unset($form['field_project_status_tid_op']['#options']['not empty']);
+			if ($form['#id'] == 'views-exposed-form-projects-page-3' || $form['#id'] == 'views-exposed-form-map-of-projects-page') {
+				//tid_select corresponds with js
+				$form['field_project_status_tid']['#suffix'] = '<div id="tid_select"></div>';
+			}
+		}
+	break;
+	case 'contacts_node_form':
+		if (isset($_GET['tid'])) {
+			//prepopulate account from target
+			$tid = $_GET['tid'];
+			$form['field_account_reference'][LANGUAGE_NONE][0]['target_id']['#default_value']=$tid;
+		}
+	break;
+
+    case 'opportunities_node_form':
+		
+		//Add Label used by js for setting alerts/messages
+		$form['field_close_date'][LANGUAGE_NONE]['#suffix'] = '<div class="ex_msg">Typical project end date</div></div>';
+		
+		If (empty($form['field_opportunity_services']['und'][0]['field_opportunity_service']['und']['#default_value'])) {
+			// Remove default value of 1 if no service is selected
+			$form['field_opportunity_services']['und'][0]['field_quantity']['und'][0]['value']['#default_value'] = null;
+		 }
+		 
+		//adds ec_app.js to forms
+		$form['#after_build'][] = 'ec_app_after_build'; 
+		
+		//service field collection
+		//adds onchange function to all selects within opportunity services field collection. The JS function is in ec_app.js
+		foreach($form['field_opportunity_services'][LANGUAGE_NONE] as $key => $service_child) {
+			if(isset($form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_opportunity_service']['#attributes'])){
+				if(isset($form['field_opportunity_services']['und'][$key]['field_opportunity_service']['und']['#type']) == 'select'){
+					$form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_opportunity_service']['und']['#attributes']['onchange'] = "servicePrice(this, '".$key."', this.id)";
+				}	
+			}
+			if(isset($form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_quantity']['#attributes'])){
+				if(isset($form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_quantity']['und'][0]['value']['#type']) == 'textfield'){
+					$form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_quantity']['und'][0]['value']['#attributes']['onchange'] = "updatePrice('".$key."')";
+				}	
+			}
+			if(isset($form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_service_amount']['#attributes'])){
+				if(isset($form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_service_amount']['und'][0]['value']['#type']) == 'textfield'){
+					$form['field_opportunity_services'][LANGUAGE_NONE][$key]['field_service_amount']['und'][0]['value']['#attributes']['onchange'] = "updatePrice('".$key."')";
+				}	
+			}
+		}
+	break;
+	
+	case 'projects_node_form':
+		// SET DEFAULT PROJECT VALUES FROM OPP
+		if(isset($_GET['createproject'])=='true') {
+			
+			//Code for the Create A Project button
+			//Prepopulates based on the opportunity you're coming from	
+			
+			$newtitle = $_GET['title'];
+			$projstatus = $_GET['status'];
+			$projadd = $_GET['address'];
+			$projcity = $_GET['city'];
+			$projst = $_GET['st'];
+			$projzip = $_GET['zip'];
+			$projclientname = $_GET['clientname'];
+			$projoppid = $_GET['oppid'];
+			$builderid = $_GET['bid'];
+			
+			$form['title']['#default_value']= $newtitle;
+			$form['field_project_status']['#default_value']= $projstatus;
+			$form['field_address']['und'][0]['value']['#default_value']=$projadd;
+			$form['field_city']['und'][0]['value']['#default_value']=$projcity;
+			$form['field_state']['und'][0]['value']['#default_value']=$projst;
+			$form['field_zip']['und'][0]['value']['#default_value']=$projzip;
+			$form['field_client_project_name']['#default_value']=$projclientname;
+			$form['field_opportunities']['und'][0]['nid']['#default_value']=$projoppid;
+			$form['field_account_reference']['und'][0]['target_id']['#default_value']=$builderid;
+			
+		} //END DEFAULT PROJECT VALUES
+		
+		//Add Label used by js for setting alerts/messages
+		$form['field_address'][LANGUAGE_NONE]['#suffix'] = '<label for="jquery_msg"></label></div>';
+	
+	break;
+	case 'ol_todo_node_form':
+	
+		$parts  = parse_url($_SERVER["HTTP_REFERER"]);
+		parse_str($parts ['query'], $query);
+		$pp = $query['pid'];
+		
+		// Set and store project id, so that hook_node_presave in ec custom features.module can use it
+		$form['projectid'] = array(
+			'#type' => 'hidden',
+			'#title' => t('projectid'),
+			'#default_value' => $pp,
+			'#weight' => -15,
+			);
+			
+		unset($form['actions']['delete']);
+		if ($pp == 0) {
+			$pp=ec_app_ec_return_project($mainnode, 'opportunities', 'field_opp_tasks');
+		}
+		if($pp > 0) {
+		// Add the recalculate tasks checkbox - This is used by hook node presave in ec custom features.module
+		$form['recalcdates'] = array(
+			'#type' => 'checkbox',
+			'#title' => t('Recalculate future tasks on save'),
+			'#default_value' => 0,
+			'#weight' => 1,
+			);
+		}
+		$form['notifyassignee'] = array(
+			'#type' => 'checkbox',
+			'#title' => t('Notify assignee upon save'),
+			'#default_value' => 0,
+			'#weight' => 5,
+			);
+	   $mainnode = $form['nid']['#value'];
+
+		$form['commentform'] = array(
+			'#type' => 'textarea',
+			'#title' => t('Add Comment'),
+			'#attributes' => array('class' => array(0 => 'ec-task-comments')),
+			'#prefix' => '<label for="ec-task-comments">Add Comment</label>',
+			'#weight' => 9,
+		);
+		//client wants to see the task node view while on the task node edit form. Idk why...
+			//if task_viewnode doesnt contain the class view-content, then it returned 0 results and is probably an opportunity, not a project
+		$task_viewnode = views_embed_view('task_view', 'page_1', $mainnode);
+		if (strpos($task_viewnode,'view-content') == 0) {
+			$task_viewnode = views_embed_view('task_view', 'page_3', $mainnode);
+		}
+		
+		$form['taskrender'] = array(
+			'#type' => 'hidden',
+			'#title' => 'Task Info',
+			'#weight' => -1,
+			'#suffix' => '<div class="task-edit-info"><h4>Task Info</h4>'.$task_viewnode.'</div>',
+		);
+		//client wants comments displayed on the node view and the node form, and also want's to be able to add them for node form
+		$view_result = views_embed_view('comments_for_node', 'block', $mainnode);
+		$form['commentrender'] = array(
+			'#type' => 'hidden',
+			'#title' => 'Comments',
+			'#weight' => 10,
+			'#suffix' => $view_result,
+		);
+	break;
+	case 'accounts_node_form':
+		//the cancel button module does not work for this content type for some reason. So, make our own
+		$form['actions']['mycancel'] = array(
+		'#markup' => '<input type="button" class="form-submit" value="Cancel" id="mycancel">',
+		'#weight' => 20,
+		);
+	break;
+  }
+}
+
+/**
+ * Implements hook_form_node_delete_confirm_alter().
+ *
+ */
+function ec_app_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
+	if (user_has_role(11)) {
+		drupal_set_message(t("I'm sorry but you do not have permission to delete content. Please hit cancel to return"),'status');
+		unset($form['actions']['submit']);
+	}
+}
+
+/**
+ * Implements hook_node_delete().
+ *
+ */
+function ec_app_node_delete($node) {	
+
+//need to unset the target id from the inline entity form on projects and opps if it gets deleted
+  switch ($node->type) {
+	  case 'ol_todo':
+		if (isset($_GET['destination'])) {
+			$dest = $_GET['destination'];
+			$projectnid = end(explode('/',$dest));
+			
+			$my_id = $node->nid; //node being deleted
+			$wrapper = node_load($projectnid);
+		
+			switch ($wrapper->type) {
+				case 'opportunities':
+					foreach($wrapper->field_opp_tasks[LANGUAGE_NONE] as $delta => $field)  {
+						if ($field['target_id'] == $my_id) {
+							unset($wrapper->field_opp_tasks[LANGUAGE_NONE][$delta]);
+							node_save($wrapper);
+						}
+					}
+				break;
+				case 'projects':
+
+					foreach($wrapper->field_project_tasks[LANGUAGE_NONE] as $delta => $field)  {
+					
+						if ($field['target_id'] == $my_id) {
+							unset($wrapper->field_project_tasks[LANGUAGE_NONE][$delta]);
+							
+							node_submit($wrapper);
+							node_save($wrapper);
+						}
+					}
+				break;
+				default:
+				break;
+			}
+		}
+	  break;
+	  case 'service_task':
+	  //when a service auto task is deleted, lazy load its service and unset its reference
+	  //if you dont, auto tasks will make empty tasks that are a pain in the ass
+		if(!empty($node->field_service[LANGUAGE_NONE][0]['target_id'])){
+				$servicenode = node_load($node->field_service[LANGUAGE_NONE][0]['target_id']);
+			foreach ($servicenode->field_service_tasks[LANGUAGE_NONE] as $key => $sss) {			
+				if($sss['target_id'] == $node->nid) {
+					unset($servicenode->field_service_tasks[LANGUAGE_NONE][$key]);
+					node_save($servicenode);
+				}
+			}
+		}
+	 
+	  break;
+
+  }	
+}
+
+/**
+ * Implements hook_after_build().
+ *
+ */
+function ec_app_after_build($form, &$form_state) {
+
+  $path = drupal_get_path('module', 'ec_app');
+  drupal_add_js ("$path/ec_app.js");
+  
+  return $form;
+}
+
+/**
+ * Custom function to return the offset (numeric) value
+ *   from an auto task
+ * @param String $taskid
+ *	 The field_ol_task_id value of the task you want the offset for.
+ */
+function ec_app_ec_return_offset($taskid) {
+		// $taskid = the custom value in field_data_field_ol_task_id
+		// Returns the numeric value in field_ol_task_id used to represent the number
+		//   of days to offset a default due date of a task
+		
+			$query = new EntityFieldQuery();
+			$qval = $taskid;
+			$query->entityCondition('entity_type', 'node')
+			->entityCondition('bundle', 'service_task')
+			->propertyCondition('status', NODE_PUBLISHED)
+			->fieldCondition('field_task_id', 'value', $qval, '=')
+			// ->fieldCondition('field_photo', 'fid', 'NULL', '!=')
+			// ->fieldCondition('field_faculty_tag', 'tid', $value)
+			// ->fieldCondition('field_news_publishdate', 'value', $year . '%', 'like')
+			// ->fieldOrderBy('field_photo', 'fid', 'DESC')
+			// ->range(0, 10)
+			->addMetaData('account', user_load(1)); // Run the query as user 1.
+
+			$result = $query->execute();
+
+			if (isset($result['node'])) {
+				$news_items_nids = array_keys($result['node']);	
+				$servicetask = node_load($news_items_nids[0]);
+				$offset = $servicetask->field_data_offset[LANGUAGE_NONE][0]['value'];
+				return $offset; //i.e. '120'
+			} else {
+				return 0;
+			}
+}
+
+/**
+ * Custom function to return an Array containing latitude and longitude
+ *   of an address using googles geocode api.
+ *   This corresponds with Geolocation Field module to hold lat/lng data
+ *   but is not required.
+ *
+ * @param string $address, string $city, string $st, string $zip
+ *	 
+ */
+function ec_app_return_geo($address, $city, $st, $zip) {
+	
+	$key = 'AIzaSyBsXFXU7R_8p6U6pD_o74EhdCKUoTk-AJk';
+	$json_addy = str_replace(' ','+',$address).',+'.str_replace(' ','+',$city).',+'.str_replace(' ','+',$st).',+'.$zip;
+	$url = 'https://maps.googleapis.com/maps/api/geocode/json?address='.$json_addy.'&key='.$key;
+	$jsonData   = file_get_contents($url);
+
+	$json = json_decode($jsonData);
+	//OK
+	//ZERO_RESULTS
+	//ERROR
+	
+	if ($json->status == 'OK') {
+		
+		$lat = $json->results[0]->geometry->location->lat;
+		$long = $json->results[0]->geometry->location->lng;
+		$latsin = sin(deg2rad($lat));
+		$latcos = cos(deg2rad($lat));
+		$lngrad = deg2rad($long);
+		
+		$response = array('status' => 'OK', 'lat' => $lat, 'long' => $long,'lat_sin' => $latsin, 'lat_cos' => $latcos, 'lng_rad' => $lngrad);
+		return $response;
+	} elseif ($json->status == 'ZERO_RESULTS'){
+		drupal_set_message(t("Oh no :( Google could not find this address to geocode."), 'warning');
+	
+		return array('status' => 'ZERO_RESULTS');
+	} else {
+		drupal_set_message(t("Sorry :( Google's geocode response returned an error! Check log for entire response!"), 'warning');
+		watchdog('ec_app', 'Function ec_app_return_geo encountered an unhandled response from it\'s geocode request to Google.
+		The $json request likely returned Null. </br>Info: </br> api_key: %apikey</br>address_string: %addstr</br>url_submitted: %urlsub', 
+         array('%apikey' => $key, '%addstr' => $json_addy,'%urlsub' => $url, WATCHDOG_ERROR));
+		 return array('status' => 'ERROR');
+	}
+	
+	
+}
+
+/**
+* Implementation of hook_menu().
+*/
+function ec_app_menu() {
+
+  $items['get/ajax/node/%'] = array(
+    'page callback' => 'ec_app_ajax_get_ajax', // Render HTML
+    'type' => MENU_CALLBACK,
+	'page arguments' => array(3),
+    'access arguments' => array('access content'),
+    'delivery callback' => 'ec_app_ajax_callback',  // Magic goes here
+  );
+  //THIS HANDLES THE PRIMARY REDIRECT WHEN SOMEONE LOGS IN BASED ON WHICH HOMEBOX LAYOUT THEY WANT
+    $items['node/25591'] = array(
+		'title' => 'Redirecting page',
+		'access arguments' => array('access content'),
+		'page callback' => 'ec_app_redirected_page',
+		'type' => MENU_CALLBACK,
+	);
+	$items['admin/rotate'] = array(
+	'type' => MENU_CALLBACK,
+    'page callback' => 'ec_app_rotate_image',
+    'page arguments' => array(2, 3, 4),
+    'access arguments' => array('access content'),
+  );
+  return $items;
+}
+
+function ec_app_redirected_page() {
+	//THIS HANDLES THE PRIMARY REDIRECT WHEN SOMEONE LOGS IN BASED ON WHICH HOMEBOX LAYOUT THEY WANT
+	//THIS WILL CAUSE ISSUES IF MIGRATING THE SITE TO A NEW HOST
+	//MIGRATE CHANGE HERE - COMMENT OUT DRUPAL_GOTO LINE WHILE TROUBLESHOOTING. Uncomment when back to production mode
+	global $user;
+	$user_fields = user_load($user->uid);
+	$red = $user_fields->field_dashboard_option[LANGUAGE_NONE][0]['value'];
+	drupal_goto($path = $red);
+}
+
+function ec_app_ajax_get_ajax($value) {
+	global $user;
+	$user_fields = user_load($user->uid);
+	$user_fields->field_dashboard_option[LANGUAGE_NONE][0]['value'] = $value;
+	user_save($user_fields);
+	$string = 'Successfully updated!';
+	return $string;
+}
+
+function ec_app_ajax_callback($page_callback_result) {
+  // Only render content and validates return
+  $html = $page_callback_result;
+  print $html;
+
+}
+
+ /** Implements hook_node_view().
+ *
+ **/
+function ec_app_node_view($node, $view_mode, $langcode) {
+if (isset($_GET['tt'])) {
+	dpm(1);
+	foreach (variable_get('search_active_modules', array('node', 'user')) as $module) {
+    //module_invoke($module, 'update_index');
+	dpm($module);
+  }
+}
+
+if ($node->nid == 26274) {
+		$node->content['ajax_response'] = array(
+			'#type' => 'hidden',
+			'#weight' => -1,
+			'#suffix' => '<div id="ajax-target"></div>',
+		); //empty target for ajax response		
+	
+}
+	switch($node->type) {
+		
+     case 'projects':
+		 
+		 //Add image rotate button - see ec_app_menu item for /admin/rotate function and see template.php for html
+
+		//GET CONTACTS FROM OPPORTUNITY AND BRING OVER, IF USER CREATED A PROJECT FROM AN OPPORTUNITY
+		 //Add Bring over Contacts link and Add Contact button
+		if (isset($node->content['field_project_contacts'])) {
+			$node->content['field_project_contacts']['#prefix'] .= '<div class="ec-bring-contacts"><a href="'. $_SERVER["REQUEST_URI"] . '?bc=yes">Import Opportunity contacts</a></div>';
+			if (strpos($node->content['field_project_contacts'][0]['#markup'], 'Add Contact') != true) {
+				$sitelink = 'https://'.$_SERVER['SERVER_NAME'].'/field-collection/field-project-contacts/add/node/'.$node->nid.'?destination=node/'.$node->nid;
+				$node->content['field_project_contacts']['#suffix'] .= '<div class="ec-action"><a class="green-button" href="'.$sitelink.'">Add Contact</a></div>';
+			}
+		}
+		//BEGIN GET CONTACTS FROM OPP
+		if (isset($_GET['bc']) == 'yes') {
+		 if (!empty($node->field_opportunities)) {
+			$opportunity = node_load($node->field_opportunities[LANGUAGE_NONE][0]['nid']);
+			$contacts_count = count($opportunity->field_project_contacts[LANGUAGE_NONE]);
+			
+			if ($contacts_count > 0) {
+
+				$my_node=node_load($node->nid);
+				foreach ($opportunity->field_project_contacts[LANGUAGE_NONE] as $key => $contact) {
+				 //creating field collection items is a fucking PAIN - but it works
+					//field collection id's from opportunity
+					$contactvalue = $contact['value'];
+					
+					$fc = entity_load('field_collection_item', array($contactvalue));
+			
+						//field collection values from opportunity
+						$role = $fc[$contactvalue]->field_role[LANGUAGE_NONE][0]['tid'];// = 6
+						$contactref = $fc[$contactvalue]->field_contact_reference[LANGUAGE_NONE][0]['target_id'];// = 22155
+						$primarycontact = $fc[$contactvalue]->field_primary_contact[LANGUAGE_NONE][0]['value'];// = 0
+						$desc = $fc[$contactvalue]->field_description[LANGUAGE_NONE][0]['value'];// = 'text'
+						//$fc[$contactvalue]->field_description['und'][0]['safe_value'];// = 'text'
+						  
+					$field_collection_item = entity_create('field_collection_item', array('field_name' => 'field_project_contacts'));
+					//$fuck = node_load($_GET['fuckthis']);
+					// $fc_item = entity_create('field_collection_item', array('field_name' => 'field_project_contacts'));
+					// $fc_item->setHostEntity('node', $my_node);
+					$field_collection_item->setHostEntity('node', $my_node);
+					// $fc_wrapper = entity_metadata_wrapper('field_collection_item', $fc_item);
+					// $fc_wrapper->field_role->set($role);
+					// $fc_wrapper->field_contact_reference->set($contactref);
+					// $fc_wrapper->field_primary_contact->set($primarycontact);
+					// $fc_wrapper->field_description->set($desc);
+					// node_save($my_node);
+					// $fc_wrapper->save(TRUE);
+
+					$field_collection_item->field_role[LANGUAGE_NONE][]['tid'] = $role;
+					$field_collection_item->field_contact_reference[LANGUAGE_NONE][]['target_id'] = $contactref;
+					$field_collection_item->field_primary_contact[LANGUAGE_NONE][]['value'] = $primarycontact;
+					$field_collection_item->field_description[LANGUAGE_NONE][]['value'] = $desc;
+			
+					$field_collection_item->save(TRUE);
+
+				}
+				node_save($my_node);
+				$alias = drupal_get_path_alias('node/'.$node->nid);
+				drupal_goto($alias);
+				
+			} else { //count = 0
+				drupal_set_message(t('I checked, but didn\'t see any contacts on that opportunity. Sorry!'),'status');
+			}
+		 } else {//bc isset = yes but opportunity field is empty so display an error 
+			drupal_set_message(t('Sorry, no opportunity has been referenced yet :('),'status');
+			
+		 }
+		}
+		//----------------
+		//END GET CONTACTS
+		
+		//RECALCULATE DUE DATES
+		//Check to see if we are recalculating due dates
+		if (isset($_POST['redate'])) {
+	
+		  if (!empty($_POST['redate'])) {
+			  
+			$newdate = $_POST['redate'];
+				
+				foreach ($node->field_project_tasks[LANGUAGE_NONE] as $key => $task) {
+					$tasknode = node_load($task['target_id']);
+					//$dateoffset = $tasknode->field_data_offset[LANGUAGE_NONE][0]['value']; //this is no longer local, this is looked up in a function
+					
+					$dateoffset = ec_app_ec_return_offset($tasknode->field_ol_task_id[LANGUAGE_NONE][0]['value']);
+					
+					if (!empty($dateoffset) && $tasknode->field_todo_label[LANGUAGE_NONE][0]['tid'] == 1) {
+						if($dateoffset < 0) $stroff = $dateoffset . ' days'; //take out plus sign if negative
+						if($dateoffset >= 0) $stroff = ' + ' . $dateoffset . ' days';
+						$duedate = strtotime($newdate. $stroff);
+						$tasknode->field_todo_due_date_singledate[LANGUAGE_NONE][0]['value'] = $duedate;
+						node_submit($tasknode);
+						node_save($tasknode);
+					
+					}
+				}
+				//ec_app_add_comment('Recalculated task due dates from '.$newdate, $node->nid);
+		  }
+		}
+		//END CHECK RECALCULATE
+		
+		
+		//display permit numbers as links - multi value field
+		if (!empty($node->content['field_permitting_number'])) {
+			foreach($node->field_permitting_number[LANGUAGE_NONE] as $key => $permitnum) {
+				$myvalue = $permitnum['value'];
+				$node->content['field_permitting_number'][$key]['#markup'] = '<a href="http://web1.seattle.gov/DPD/permitstatus/Project.aspx?id='.$myvalue.'" target="_blank">'.$myvalue.'</a>';
+			}
+			
+	    }
+		//display as map link
+	   	if (!empty($node->content['field_address'])) {
+			$addy = trim($node->field_address[LANGUAGE_NONE][0]['value']);
+			$city = trim($node->field_city[LANGUAGE_NONE][0]['value']);
+			$st = trim($node->field_state[LANGUAGE_NONE][0]['value']);
+			$zip = trim($node->field_zip[LANGUAGE_NONE][0]['value']);
+			$fulladd = $addy.' '.$city.' '.$st.' '.$zip;
+			
+			$json_addy = str_replace(' ','+',$addy).',+'.str_replace(' ','+',$city).',+'.str_replace(' ','+',$st).',+'.$zip;
+			$node->content['field_address'][0]['#markup'] = '<a href="https://www.google.com/maps?q='.$fulladd.'" target="_blank">'.$addy.'</a>';  
+		 
+	    }
+	
+	   //INSERT TASK VIEW BLOCK This corresponds with some javascript is ec_app module that hides/unhides these divs
+	   //INSERT RECALCULATE TASKS BUTTON
+	   $view_result = views_embed_view('task_view', 'block_1', $node->nid);
+	   $prefix_title = '<div class="ec-legend" id="task-view-block"><h3><span>Tasks</span></h3><div class="link" id="btn-edit-task-view"><span class="og-white">Edit Mode</span></div><div class="view_result">';
+	   $prefix_btn = '<details class="recalc-details"><Summary>Reset Task Dates</summary><form method="post" action="#" class="recalc-dates" name="recalc_form"><label class="recalc_label">Reset From</label>';
+	   $prefix_date = '<input type="date" class="recalc" name="redate" value="" ><input type="submit" value="Apply" class="btn btn-primary"></details></form>';
+	   $node->content['view_embed'] = array(
+			'#markup' => $view_result,
+			'#weight' => -1,
+			'#prefix' => $prefix_title.$prefix_btn.$prefix_date,
+			'#suffix' => '</div></div>',
+		);
+		
+		//INSERT TASK VIEW EDIT BLOCK This corresponds with some javascript is ec_app module that hides/unhides these divs
+		//$view_result = views_embed_view('task_view', 'block_1', $node->nid);
+	   $view_result1 = views_embed_view('project_tasks_block', 'block', $node->nid);
+	   $prefix_title1 = '<div class="ec-legend" id="edit-task-view"><h3><span>Tasks</span></h3><div class="link" id="btn-task-view"><span class="og-white">Cancel</span></div><div class="view_result">';
+	   $prefix_btn1 = '<details class="recalc-details"><Summary>Reset Task Dates</summary><form method="post" action="#" class="recalc-dates" name="recalc_form"><label class="recalc_label">Reset From</label>';
+	   $prefix_date1 = '<input type="date" class="recalc" name="redate" value="" ><input type="submit" value="Apply" class="btn btn-primary"></details></form>';
+	   $node->content['view_embed1'] = array(
+			'#markup' => $view_result1,
+			'#weight' => -1,
+			'#prefix' => $prefix_title1.$prefix_btn1.$prefix_date1,
+			'#suffix' => '</div></div>',
+		);
+		
+		//INSERT SERVICE BLOCK
+	   if (!empty($node->content['field_opportunities']['#items'])) {
+		
+	    $block_result = views_embed_view('service_block', 'block', $node->nid);
+	    $node->content['service_embed'] = array(
+			'#markup' => $block_result,
+			'#weight' => -2,
+			'#prefix' => '<div class="ec-legend"><span><h3>Services</h3></span><div class="ec_view_block">',
+			'#suffix' => '</div></div>',
+		 );
+	   } else { 
+		$markup = '<em> No Opportunity has been linked yet </em>';
+	    $node->content['service_embed'] = array(
+			'#markup' => $markup,
+			'#weight' => -2,
+			'#prefix' => '<div class="ec-legend"><span><h3>Services</h3></span><div class="ec_view_block">',
+			'#suffix' => '</div></div>',
+		 );
+	   }
+	break;
+
+	 case 'opportunities':
+		if (!empty($node->content['field_address'])) {
+			$addy = $node->field_address[LANGUAGE_NONE][0]['value'];
+			$node->content['field_address'][0]['#markup'] = '<a href="https://www.google.com/maps?q='.$addy.'" target="_blank">'.$addy.'</a>';  
+			 
+	   }
+	   	//TASK VIEW BLOCK AND TASK EDITABLE VIEW BLOCK ARE INSERTED IN node--opportunities.tpl.php
+	
+		
+	 break;
+	 case 'contacts':
+		if (!empty($node->content['field_contact_email'])) {
+			$myvalue = $node->field_contact_email[LANGUAGE_NONE][0]['value'];
+			$node->content['field_contact_email'][0]['#markup'] = '<a href="mailto:'.$myvalue.'" target="_blank">'.$myvalue.'</a>';  
+			 
+	    }
+	 break;
+	 case 'accounts':
+		if (!empty($node->content['field_website'])) {
+			$web = $node->field_website[LANGUAGE_NONE][0]['value'];
+			$node->content['field_website'][0]['#markup'] = '<a href="http://'.$web.'" target="_blank">'.$web.'</a>'; 
+	    }
+				
+		//add contacts view block
+		$view_result = views_embed_view('contacts', 'block_1', $node->nid);
+	    $node->content['view_embed'] = array(
+			 '#markup' => $view_result,
+			 '#weight' => 10,
+			 '#prefix' => '<div class="ec-legend"><h3><span>Contacts</span></h3><div class="view_result">',
+			 '#suffix' => '</div></div>',
+		 );
+		 //add Add Contacts button
+		 $nodetitle = $node->title;
+		 $nnid = $node->nid;
+		 $mmcup = '<div class="view-header"><div><a href="/node/add/contacts?tid='.$nodetitle.'('.$nnid.')&destination=node/'.$nnid.'" class="green-button">Add a Contact</a></div></div>';
+		 $node->content['my_button'] = array(
+			 '#markup' => $mmcup,
+			 '#weight' => 11,
+			 '#prefix' => '',
+			 '#suffix' => '',
+		 );
+		 //add projects block
+		$acct_result = views_embed_view('projects', 'block_4', $node->nid);
+	    $node->content['acct_embed'] = array(
+			 '#markup' => $acct_result,
+			 '#weight' => 12,
+			 '#prefix' => '<div class="ec-legend"><h3><span>Projects</span></h3><div class="view_result">',
+			 '#suffix' => '</div></div>',
+		 );
+		 //add opportunities view block
+
+		$opp_result = views_embed_view('opportunities', 'block_2', $node->nid);
+	    $node->content['opp_embed'] = array(
+			 '#markup' => $opp_result,
+			 '#weight' => 13,
+			 '#prefix' => '<div class="ec-legend"><h3><span>Opportunities</span></h3><div class="view_result">',
+			 '#suffix' => '</div></div>',
+		 );
+		if (!empty($node->content['field_billing_address'])) {
+			$add = $node->field_billing_address[LANGUAGE_NONE][0]['value'];
+			$city = $node->field_billing_city[LANGUAGE_NONE][0]['value'];
+			$st = $node->field_billing_state[LANGUAGE_NONE][0]['value'];
+			$zip = $node->field_billing_zip[LANGUAGE_NONE][0]['value'];
+			
+			//format address properly
+			$node->content['field_billing_address'][0]['#markup'] = '<div>'.$add.'</div><div>'.$city.' '.$st.' '.$zip.'</div>';
+	    }
+	 break;
+	} //END SWITCH
+}	
+
+/**
+ * Implements hook_field_attach_view_alter().
+ *
+ * Show titles/labels of empty fields.
+ */
+function ec_app_field_attach_view_alter(&$output, $context) {
+	
+  // We proceed only on nodes.
+
+  if ($context['entity_type'] != 'node' || $context['view_mode'] != 'full') {
+    return;
+  } 
+  $node = $context['entity'];
+  // Load all instances of the fields for the node.
+  $instances = _field_invoke_get_instances('node', $node->type, array('default' => TRUE, 'deleted' => FALSE));
+ 
+  foreach ($instances as $field_name => $instance) {
+    // Set content for fields they are empty.
+    if (empty($node->{$field_name})) {
+      $display = field_get_display($instance, 'full', $node);
+	
+      // Do not add field that is hidden in current display.
+      if ($display['type'] == 'hidden') {
+        continue;
+      }
+      if ($display['type'] == 'editable') {
+        continue;
+      }
+      // Load field settings.
+      $field = field_info_field($field_name);
+      // Set output for field.
+      $output[$field_name] = array(
+        '#theme' => 'field',
+        '#title' => $instance['label'],
+        '#label_display' => 'above',
+        '#field_type' => $field['type'],
+        '#field_name' => $field_name,
+        '#bundle' => $node->type,
+        '#object' => $node,
+        '#items' => array(),
+        '#entity_type' => 'node',
+        '#weight' => $display['weight'],
+        0 => array('#markup' => '&nbsp;'),
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function ec_app_menu_alter(&$items) {
+//delete skip confirmation reload page and jump back to task block
+
+  $items['node/%node/delete']['page callback'] = 'my_node_delete_function';
+  $items['node/%node/delete']['page arguments'] = array(1);
+  $items['node/%node/delete']['module'] = 'ec_app';
+  $items['node/%node/delete']['file'] = 'ec_app.pages.inc';  
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------
+function ec_app_node_presave($node) {		
+  switch ($node->type) {
+	  	 
+    case 'opportunities':
+		global $user;
+		$node->revision_uid = $user->uid;
+		
+		  //get default account manager from account and bring it over to opp
+		  if(!empty($node->field_account_reference[LANGUAGE_NONE][0]['target_id']) && $node->is_new) {
+				$acct = node_load($node->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+				$acctmgr = $acct->field_account_manager[LANGUAGE_NONE][0]['uid'];
+				$node->field_account_manager[LANGUAGE_NONE][0]['uid'] = $acctmgr;
+		  }
+		  
+		  //PROBABILITY DISPLAY
+		  if(isset($node->field_opportunity_type)){
+			//SETTING THE PROBABILITY
+			$term = taxonomy_term_load($node->field_opportunity_type[LANGUAGE_NONE][0]['tid']);
+			$prob = $term->field_probability[LANGUAGE_NONE][0]['value'];
+			$probdec = $term->field_probability_perc[LANGUAGE_NONE][0]['value']; //get the actual decimal value
+			$node->field_probability_display[LANGUAGE_NONE][0]['value'] = $prob; //set the display
+		
+			//SETTING THE REVENUE IF PROBABILITY IS UPDATED
+			$node->field_expected_revenue[LANGUAGE_NONE][0]['value'] = $node->field_amount[LANGUAGE_NONE][0]['value'] * $probdec;
+			
+			//IF CANCELING THE OPPORTUNITY OR CLOSING IT, THEN CLOSE ALL ITS TASKS 63 in canceled 64 is completed
+				if($node->field_opportunity_type[LANGUAGE_NONE][0]['tid'] != $node->original->field_opportunity_type[LANGUAGE_NONE][0]['tid'] && $node->field_opportunity_type[LANGUAGE_NONE][0]['tid'] == 63) {
+					if(!empty($node->field_opp_tasks['und'])) {
+						ec_app_close_all_tasks($node->nid);
+					}
+				}
+			}
+  
+		  //CALCULATE FIELD COLLECTION ITEMS WHEN EDITING THE NODE FORM
+		  if(isset($node->field_opportunity_services) && $node->original->field_opportunity_services[LANGUAGE_NONE] != $node->field_opportunity_services[LANGUAGE_NONE]){
+			 $total = 0;			 
+			 //LOOP THROUGH SERVICES AND CALCULATE GRAND TOTAL
+			 foreach ($node->field_opportunity_services[LANGUAGE_NONE] as $key => $service) {
+				if(!empty($service['field_amount'][LANGUAGE_NONE][0]['value'])) {
+					$total =  $total + $service['field_amount']['und'][0]['value'];
+				}
+			 }
+			 
+			 //SET THE TOTAL AMOUNT ON PARENT NODE
+			 $node->field_amount[LANGUAGE_NONE][0]['value'] = $total;
+			 //RESET THE REVENUE SINCE TOTAL IS UPDATED
+			 $node->field_expected_revenue[LANGUAGE_NONE][0]['value'] = $node->field_amount[LANGUAGE_NONE][0]['value'] * $probdec; //field_revenue = field_amount * field_probability
+		  }
+		
+		//CREATE OPPORTUNITY AUTO TASKS
+		  If ($node->is_new) {
+		  		$auto_tasks = db_query("SELECT nid FROM {node} where type = 'opportunity_auto_tasks'");
+				foreach ($auto_tasks as $oat_auto_task) {
+					$oatnode = node_load($oat_auto_task->nid);
+					
+					$new_opp_task = null;
+					$new_opp_task = new stdClass();
+					$new_opp_task->title = $oatnode->title;
+					$new_opp_task->body = $oatnode->body;
+					$new_opp_task->type = "ol_todo";
+					node_object_prepare($new_opp_task);
+					$new_opp_task->language = LANGUAGE_NONE;
+					$new_opp_task->uid = $user->uid;
+					$new_opp_task->status = 1;
+					$new_opp_task->promote = 0;
+					$new_opp_task->comment = 2;
+					$new_opp_task->path['pathauto'] = 1;
+					$new_opp_task->field_todo_list_reference = $oatnode->field_task_list;
+					$new_opp_task->field_todo_user_reference = $oatnode->field_st_assigned_to;
+					  
+					//set the due date if the project intake date is set.
+					if (!empty($oatnode->field_data_offset[LANGUAGE_NONE][0]['value'])) {
+						$offset = $oatnode->field_data_offset[LANGUAGE_NONE][0]['value'];
+			
+						if (empty($offset) || $offset == '') $offset = 0;
+						if ($offset < 0) $stroff = $offset . ' days'; //if its negative
+						if ($offset >= 0) $stroff = ' + '. $offset . ' days';
+						$duedate = strtotime($stroff); //now +7
+						$new_opp_task->field_todo_due_date_singledate[LANGUAGE_NONE][]['value'] = $duedate;
+						
+					}
+					$new_opp_task = node_submit($new_opp_task);
+					node_save($new_opp_task);
+					watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
+					$node->field_opp_tasks[LANGUAGE_NONE][]['target_id'] = $new_opp_task->nid;
+				}
+		  }
+		
+	break; 
+	  
+    case 'projects':
+
+		//SET REVISION UID
+		global $user;
+		$node->revision_uid = $user->uid;
+		
+		//GEOCODE ADDRESS IF ADDRESS IS POPULATED AND CHANGED
+		if (!empty($node->field_address[LANGUAGE_NONE][0]['value'])) {
+			$tt = false;
+			if ($node->field_address[LANGUAGE_NONE][0]['value'] != $node->original->field_address[LANGUAGE_NONE][0]['value']) {
+				$tt = true;
+			}
+			if ($node->field_city[LANGUAGE_NONE][0]['value'] != $node->original->field_city[LANGUAGE_NONE][0]['value']) {
+				$tt = true;
+			}
+			if ($node->field_state[LANGUAGE_NONE][0]['value'] != $node->original->field_state[LANGUAGE_NONE][0]['value']) {
+				$tt = true;
+			}
+			if ($node->field_zip[LANGUAGE_NONE][0]['value'] != $node->original->field_zip[LANGUAGE_NONE][0]['value']) {
+				$tt = true;
+			}
+			if ($tt == true){
+				$addy = trim($node->field_address[LANGUAGE_NONE][0]['value']);
+				$city = trim($node->field_city[LANGUAGE_NONE][0]['value']);
+				$st = trim($node->field_state[LANGUAGE_NONE][0]['value']);
+				$zip = trim($node->field_zip[LANGUAGE_NONE][0]['value']);
+				$resp = ec_app_return_geo($addy, $city, $st, $zip);
+				if ($resp['status'] == 'OK') {
+					$node->field_location[LANGUAGE_NONE][0]['lat'] = $resp['lat'];
+					$node->field_location[LANGUAGE_NONE][0]['lng'] = $resp['long'];
+					$node->field_location[LANGUAGE_NONE][0]['lat_sin'] = $resp['lat_sin'];
+					$node->field_location[LANGUAGE_NONE][0]['lat_cos'] = $resp['lat_cos'];
+					$node->field_location[LANGUAGE_NONE][0]['lng_rad'] = $resp['lng_rad'];
+				}
+			}
+	    }
+		  
+		//SET BOX FOLDER LINK FROM SECONDARY EXPOSED WIDGET
+		  If (isset($node->field_box_folder_link['und'])) {
+			if(!empty($node->field_box_folder_link['und'])) {
+				//field_project+_files is hidden with css so there is no confusion
+				//I created another field to be editable so they could editable
+				//the link from the node view
+			  $node->field_project_files['und'][0]['linkshare'] = $node->field_box_folder_link['und'][0]['value'];
+		   }
+		  }
+		  //get default account manager from account and bring it over to 
+		  if(!empty($node->field_account_reference[LANGUAGE_NONE][0]['target_id']) && $node->is_new) {
+				$acct = node_load($node->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+				$acctmgr = $acct->field_account_manager[LANGUAGE_NONE][0]['uid'];
+				$node->field_account_manager[LANGUAGE_NONE][0]['uid'] = $acctmgr;
+		  }
+		
+		  //IF CANCELING THE PROJECT OR CLOSING IT CLOSE ALL OF ITS TASKS 40 CANCELLED 41 COMPLETED
+			if($node->field_project_status[LANGUAGE_NONE][0]['tid'] != $node->original->field_project_status[LANGUAGE_NONE][0]['tid'] && $node->field_project_status[LANGUAGE_NONE][0]['tid'] == 40) {
+				if(!empty($node->field_project_tasks['und'])) {
+					ec_app_close_all_tasks($node->nid);
+				}
+			}
+		
+		  if(!empty($node->field_opportunities['und'])){
+			
+			//WHEN A PROJECT NODE IS EDITED AND OPP REFERENCED - OPEN THAT OPP AND ADD A REFERENCE BACK TO THE PROJECT
+			//DOING THIS FOR NEW PROJECT NODES IS HANDLED IN NODE_INSERT IN EC_APP MODULE
+			if(!empty($node->nid)) {
+				if($node->field_opportunities['und'][0]['nid'] != $node->original->field_opportunities['und'][0]['nid']) {
+					//If it already had a nid (is being edited) and if the opportunity referenced has changed or been added
+					$opp2 = node_load($node->field_opportunities['und'][0]['nid']);
+					$opp2->field_project_reference['und'][0]['target_id'] = $node->nid;
+					node_save($opp2);
+				}
+			}
+				
+				//REMOVE WEIRD NULL ROW ON PROJECT CONTACTS FIELD COLLECTION
+				 if (isset($node->field_project_contacts)) $project_contacts_count = count($node->field_project_contacts[LANGUAGE_NONE]);
+				 //count it
+				  if (isset($node->field_project_contacts) && $project_contacts_count > 0){	
+					  //if the field is there and the count is more than nothing then
+					  foreach ($node->field_project_contacts[LANGUAGE_NONE] as $key => $contact) {
+						  //loop through each contact item
+						  if (!isset($contact['entity']->field_contact_reference[LANGUAGE_NONE][0]['target_id'])) {
+							//if the array isnt structured with this entity key, then that means it is not a legit fc item
+							//if its not a legit fc item
+							if (empty($contact['field_contact_reference'][LANGUAGE_NONE][0]['target_id'])){
+								//check to see if the target id field is empty. Unfortunately this comes back as true when u are deleting something. Which unsets everything, which we dont want
+							 if (empty($contact['value'])){
+								 //so also just check if there is an fc item id. If there is not (if its empty) then finally unset it.
+								 //basically this says only unset it if the field collection item is empty and if we are not in the middle of deleting something else.
+								unset($node->field_project_contacts[LANGUAGE_NONE][$key]);
+							 }
+							}
+						  }
+					  }
+				  }
+				
+			 //AUTO CREATE TASKS BASED ON SERVICES ON AN OPPORTUNITY
+				//--> Opportunity is linked to project -> Load that Opportunity -> Load its services -> Load each services' auto-task templates 
+				// -> Create new tasks on this project based on those loaded tasks -> Save each new task -> Get its NID -> Add that NID to the entity reference 
+				// field_project_tasks
+				//IF THERE ARE SERVICES, AND IF THERE IS NO AUDIT ID THEN AND THE NODE IS NEW, LOAD THE SERVICES ETC.
+		if ($node->is_new){
+			//LOAD THE OPPORTUNITY AND GET ITS SERVICES - BUT ONLY IF IT DOES NOT HAVE AN AUDIT ID
+			// IF IT HAS AN AUDIT ID THAT INDICATES IT IS IMPORTED/OLD DATA AND SHOULD NOT CREATE TASKS AUTOMATICALLY
+			 $opportunity = node_load($node->field_opportunities['und'][0]['nid']);
+			 if(isset($opportunity->field_opportunity_services) && empty($opportunity->field_audit_id)){
+			
+			  foreach ($opportunity->field_opportunity_services['und'] as $key =>  $service_collection) {
+				$service_col = field_collection_item_load($service_collection['value']);
+				$service = node_load($service_col->field_opportunity_service['und'][0]['target_id']);
+				if(!empty($service->field_service_tasks)){
+				
+				  $node_tasks = $node->field_project_tasks;
+				  $node_tasks = array_shift($node_tasks);
+
+				  $service_tasks = array_shift($service->field_service_tasks);
+
+				  $nt = array_column($node_tasks, 'target_id');
+				  $st = array_unique(array_column($service_tasks, 'target_id'));
+				  $ntid;$stid;
+				  if($nt) $ntid = db_query('SELECT "field_ol_task_id_value" FROM {field_data_field_ol_task_id} WHERE entity_id IN (:nt)', array(':nt' => $nt))->fetchCol();
+				  //new Line
+				  //if($nt) $ntid = db_query('SELECT "field_task_id_value" FROM {field_data_field_task_id} WHERE entity_id IN (:nt)', array(':nt' => $nt))->fetchCol();
+				  if($st) $stid = db_query('SELECT "field_task_id_value" FROM {field_data_field_task_id} WHERE entity_id IN (:st)', array(':st' => $st))->fetchCol();
+				  $nta = array_unique(array_combine($nt, $ntid));
+				  $sta = array_unique(array_combine($st, $stid));
+
+				  $diff = null;
+
+				  if (empty($nt)) $diff = $st;
+				  if(!empty($nta)){
+	 
+					foreach ($sta as $key => $value) {
+					  if(!(in_array($value , $nta))) $diff[] = $key;
+					}
+				  }
+
+				  if(!empty($diff)){
+					foreach ($diff as $value) { 
+					  $new_task_tba = node_load($value);
+					  global $user;
+					  $new_task = null;
+					  $new_task = new stdClass();
+					  $new_task->title = $new_task_tba->title;
+					  $new_task->body = $new_task_tba->body;
+					  $new_task->type = "ol_todo";
+					  node_object_prepare($new_task);
+					  $new_task->language = LANGUAGE_NONE;
+					  $new_task->uid = $user->uid;
+					  $new_task->status = 1;
+					  $new_task->promote = 0;
+					  $new_task->comment = 2;
+					  $new_task->path['pathauto'] = 1;
+					  $new_task->field_todo_list_reference = $new_task_tba->field_task_list;
+					  $new_task->field_priority = $new_task_tba->field_priority;
+					  if($node->nid) $new_task->field_project_reference['und'][0]['target_id'] = $node->nid;
+					  $new_task->field_ol_task_id = $new_task_tba->field_task_id;
+					  $new_task->field_shared_group_reference = $new_task_tba->field_shared_group_reference;
+					  
+					  //check if 'assign to account manager' is true on the auto task
+					  if ($new_task_tba->field_assign_to_account_manager[LANGUAGE_NONE][0]['value'] == 1) {
+						  $new_task->field_todo_user_reference = $node->field_account_manager;
+					  } else {
+						  $new_task->field_todo_user_reference = $new_task_tba->field_st_assigned_to;
+					  }
+					  
+					  //set the due date if the project intake date is set.
+					  if (!empty($node->field_intake_date['und'][0]['value'])) {
+						$intakedate = $node->field_intake_date['und'][0]['value'];
+						$offset = $new_task_tba->field_data_offset['und'][0]['value'];
+						
+						if (empty($offset) || $offset == '') $offset = 0;
+						if ($offset < 0) $stroff = $offset . ' days'; //if its negative
+						if ($offset >= 0) $stroff = ' + '. $offset . ' days';
+						$duedate = strtotime($intakedate. $stroff);
+						$new_task->field_todo_due_date_singledate['und'][]['value'] = $duedate;
+						
+					  }
+					  // dsm("New node Task");
+					  //save it if it's not disabled
+					  if($new_task_tba->field_disable_auto_task[LANGUAGE_NONE][0]['value'] == 0){
+						$new_task = node_submit($new_task);
+						node_save($new_task);
+						watchdog('ec_app', 'Created new autotask from autotask nid '.$new_task_tba->nid);
+						$node->field_project_tasks['und'][]['target_id'] = $new_task->nid;
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		   }
+		  }
+    break;
+	
+	case 'service_task':
+		global $user;
+		$node->revision_uid = $user->uid;
+		
+		 if(!empty($node->nid)) {
+			if(!empty($node->field_service['und'][0]['target_id'])){
+				if ($node->field_service['und'][0]['target_id'] != $node->original->field_service['und'][0]['target_id']) {
+					$servicenode = node_load($node->field_service['und'][0]['target_id']);
+					$servicenode->field_service_tasks['und'][]['target_id'] = $node->nid;
+					$servicetitle = $servicenode->title;
+					node_save($servicenode);
+					drupal_set_message(t('This auto task has been added to '.$servicetitle), 'status');
+				}
+			}
+		 }
+	break;
+	case 'contacts':
+		global $user;
+		$node->revision_uid = $user->uid;
+		
+			$first = $node->field_first_name[LANGUAGE_NONE][0]['value'];
+			$last = $node->field_last_name[LANGUAGE_NONE][0]['value'];
+			$full = $first . ' ' . $last;
+			$node->title = trim($full);
+	break;
+	case 'ol_todo':
+	
+		global $user;
+		$node->revision_uid = $user->uid;
+		
+		
+			if (!empty($node->projectid)) {
+				$pid = $node->projectid;
+				$project = node_load($pid);
+				node_submit($project);
+				node_save($project);
+				//projects reference tasks. If one of those tasks is updated on its own, we want it to reflect in the projects revision date/time stamp.
+				// so we load and node submit
+				
+				//this tag utilizes some js to jump back down to the task block on projects screen
+				drupal_set_message(t('<div class="JumpToTaskViewBlock"></div>'), 'status');
+				echo '<div class="JumpToTaskViewBlock"></div>';
+				
+				
+			}
+			
+			if (isset($node->notifyassignee) && $node->notifyassignee == true && !is_null($node->nid)) {
+				
+				
+				$pnode = ec_app_ec_return_project($node->nid, 'projects', 'field_project_tasks');
+				
+				if($pnode == $node->nid) { $pnode = ec_app_ec_return_project($node->nid, 'opportunities', 'field_opp_tasks'); }
+				
+				if($pnode != $node->nid) {
+					$site_email = variable_get('site_mail', '');
+					//dpm($site_email);
+					$puser = user_load($node->field_todo_user_reference[LANGUAGE_NONE][0]['uid']);
+					$poster = $user->name;
+					$unode = drupal_get_path_alias('node/'.$node->nid);
+					$pemail = $puser->mail;
+			
+					$lnode = node_load($pnode);
+					
+					$ntitle = $lnode->title;
+					$laccount = node_load($lnode->field_account_reference[LANGUAGE_NONE][0]['target_id']);
+					$naccount = $laccount->title;
+					
+					$values = array(
+					'uemail' => $pemail,
+					'ttitle' => $node->title,
+					'poster' => $poster,
+					'unode' => $unode,
+					'ntitle' => $ntitle,
+					'naccount' => $naccount,
+					);
+
+					drupal_mail('ec_app', 'notify_ec_user_2', $user->mail, 'en', $values, $user->name . ' <webmaster@ecteam.net>');
+				}
+			}
+			
+	break;
+		
+    default:
+      break;
+  }
+}
+
+/**
+ * Function to programmatically add comment
+ * @param String $text
+ *	 The body of the comment you want to make
+ */
+function ec_app_add_comment($text, $nid) {
+
+	global $user;
+	$comment = (object) array(
+    'nid' => $nid,
+    'cid' => 0,
+    'pid' => 0,
+    'uid' => $user->uid,
+    'mail' => '',
+    'is_anonymous' => 0,
+    'homepage' => '',
+    'status' => COMMENT_PUBLISHED,
+    'subject' => '',
+    'language' => LANGUAGE_NONE,
+    'comment_body' => array(
+      LANGUAGE_NONE => array(
+        0 => array (
+          'value' => $text,
+          'format' => 'plain_text'
+        )
+      )
+    ),
+  );
+
+  comment_submit($comment);
+  comment_save($comment);
+}
+
+function ec_app_node_update($node) {
+	switch ($node->type) {
+		case 'ol_todo':
+
+			//BEGIN TASK DUE DATE RECALCULATION IF CHECKBOX IS 1
+			if (!empty($node->recalcdates) && $node->recalcdates == 1) {
+				if (!empty($node->projectid)) {
+					$newdate = date('Y-m-d',$node->field_todo_due_date_singledate[LANGUAGE_NONE][0]['value']); //The date submitted
+					$pid = $node->projectid;
+					$wrapper = entity_metadata_wrapper('node', $pid);
+					$fff = $wrapper->field_project_tasks->raw();
+					$fuckme = array();
+					$i=0;
+					foreach($fff as $keys => $tasky) {//for each task id on that project	//load it	//get and set its due date value
+						//tasky = the nid
+						if ($tasky != $node->nid) { //If its a different node then load it
+							//EMPTY ENTITIES TOTALLY FUCK THIS THING UP! CAREFUL
+							$loaded_task = entity_metadata_wrapper('node', $tasky);
+							if ($loaded_task->field_todo_label->tid->value() == 1) { //if its open then
+								
+								//$offsetdate = $loaded_task->field_data_offset->value();
+								$offsetdate = ec_app_ec_return_offset($loaded_task->field_ol_task_id->value());
+									//offset will be offset associated with that auto task id, or will be 0 if nothing is found
+							
+								if (!empty($offsetdate)) {
+									if($offsetdate < 0) $stroff = $offsetdate . ' days'; //take out the plus sign if its negative
+									if($offsetdate >= 0) $stroff = ' + ' . $offsetdate . ' days';
+									$duedate = strtotime($newdate. $stroff);
+									$loaded_task->field_todo_due_date_singledate = $duedate;
+									$fuckme[] = $loaded_task->title->value();
+									$loaded_task->save();
+								}
+										
+							}
+						}
+					}
+				}
+			}
+				//END TASK DUE DATE RECALCULATION
+				if (isset($node->commentform) && !empty($node->commentform) && !is_null($node->nid)) {
+					ec_app_add_comment($node->commentform, $node->nid);
+				}			
+		break;
+
+		default:
+		break;
+	}
+}

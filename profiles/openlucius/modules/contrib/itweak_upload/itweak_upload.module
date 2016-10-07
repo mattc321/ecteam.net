@@ -1,0 +1,1220 @@
+<?php
+
+/**
+ * @file
+ * iTweakUpload - Tweak attachments display and file upload forms.
+ */
+
+/*
+ * @TODO LIST (FIXME)
+ *
+ * - D6 BUG: attachments count in links is screwed up by the separate images gallery (see upload.module upload_link()).
+ *
+ * For 3.x:
+ * - feature: work on filefield and imagefield CCK fields:
+ *   - DONE view formatters
+ *     - DONE custom mime icons (16 and 32), make icons/16 default
+ *     - DONE test with jcarousel (there are fatal issues in jcarousel, but the integration works ok)
+ *     - test with jcarousellite (if it ever gets a D7 version, project looks abandoned as of 1/5/2013)
+ *     - complete/test integration with all lightbox modules:
+ *       - DONE lightbox2 (mostly done, check pdf, movies etc.)
+ *       - DONE highslide (the uncommitted patch, wait for official D7 port, there is also highslide2)
+ *   - upload widget re-themeing
+ *   - integration with insert.module
+ * - implement migration from itweak_upload D6
+ * - site-wide settings
+ * - Show read more... in teaser image gallery when it is limited to N images
+ * - content-type setting show_caption "show thumbnail caption in slider" 'itweak_upload_thumbnail_caption' (none, above, below) on per content-type basis
+ *      ... due to CSS problems need different approach... tables?
+ */
+
+define('ITU_CAROUSEL_VISIBLE_ITEMS', 5); // @todo: this probably should go into configuration settings
+define('ITU_USE_INSERT_MODULE', 1); // Experimental, work in progress
+
+define('ITU_DISPLAY_DISABLED', 0);
+define('ITU_DISPLAY_ALL_FILES_NO_THUMBNAILS', 1);
+define('ITU_DISPLAY_ALL_FILES_WITH_THUMBNAILS', 2);
+define('ITU_DISPLAY_FILES_AND_GALLERY', 3);
+define('ITU_DISPLAY_GALLERY', 4);
+
+define('ITU_DISPLAY_DEFAULT', ITU_DISPLAY_FILES_AND_GALLERY);
+define('ITU_ICON_DIRECTORY_DEFAULT', drupal_get_path('module', 'itweak_upload') . '/icons/itu/16');
+
+/**
+ * Implements hook_init().
+ */
+function itweak_upload_init() {
+  $carousel_visible = ITU_CAROUSEL_VISIBLE_ITEMS;
+  if (module_exists('jcarousellite')) {
+    $selector = '.itu-attachment-thumbs-jcarousellite';
+    $jcarousellite_options = <<<END
+//    btnGo: ['.externalControl .1', '.externalControl .2', '.externalControl .3'],
+    auto: null, //     auto: 800, speed: 1000,
+    speed: 400,
+    vertical: false,
+    circular: false,
+    visible: {$carousel_visible},
+    start: 0,
+    scroll: 1,
+    mouseWheel: true,
+END;
+    $js = <<<END
+(function ($) {
+  $("{$selector}").each(function(index) {
+    l=$(this);
+    p=l.parents('.itu-attachment-images');
+    if (!p[0].id) {p[0].id = 'itu-attachment-images-' + index;}
+    c=l.parents('.item-list')
+    c.jCarouselLite({
+      btnPrev: "#" + p[0].id + " .itu-attachment-jcarousellite-prev",
+      btnNext: "#" + p[0].id + " .itu-attachment-jcarousellite-next",
+      {$jcarousellite_options}
+    });
+    // Fix jCarousel Lite width bug:
+    ul=$("ul",c);
+    h=$.css(ul[0],'width');
+    h+=8;
+    ul.css('width',h+"px")
+  });
+})(jQuery);
+END;
+    jcarousellite_add($js);
+  }
+
+  if (module_exists('jcarousel')) {
+    $selector = '.itu-attachment-thumbs-jcarousel';
+    $options = array(
+      'scroll' => 1,
+//      'visible' => $carousel_visible,  // FIXME: jCarousel scales images to fit into the given width
+      'skin' => 0 ? 'ie7' : 'tango',
+      'skin path' => '',
+    );
+    jcarousel_add($selector, $options);
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function itweak_upload_theme() {
+  return array(
+    'file_link_itu' => array(
+      'variables' => array('file' => NULL, 'icon_directory' => NULL, 'show_icon' => NULL, 'options' => NULL),
+    ),
+    'file_icon_itu' => array(
+      'variables' => array('file' => NULL, 'icon_directory' => NULL),
+    ),
+    'file_formatter_table_itu' => array(
+      'variables' => array('items' => NULL, 'icon_directory' => NULL),
+    ),
+    // 'itweak_upload_images_body' in D6
+    'itweak_upload_image_gallery_body' => array(
+      'variables' => array('items' => NULL, 'limit' => NULL, 'options' => NULL),
+    ),
+    // 'itweak_upload_images' in D6
+    'itweak_upload_image_gallery' => array(
+      'variables' => array('items' => NULL, 'options' => NULL),
+    ),
+    'itweak_upload_thumbnail' => array(
+      'variables' => array('thumbnail' => NULL, 'url' => NULL, 'title_text' => NULL, 'caption_text' => NULL, 'options' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implements hook_image_default_styles().
+ */
+function itweak_upload_image_default_styles() {
+  $styles = array();
+
+  $styles['AttachmentThumbnail'] = array(
+    'effects' => array(
+      array(
+        'name' => 'image_scale_and_crop',
+        'data' => array('width' => 60, 'height' => 60, 'upscale' => 1),
+        'weight' => 0,
+      ),
+    )
+  );
+
+  return $styles;
+}
+
+function _itweak_upload_group_id($entity_type, $entity) {
+  switch ($entity_type) {
+    case 'node': $group = $entity_type . $entity->nid; break;
+    case 'comment': $group = $entity_type . $entity->cid; break;
+    default: $entity = (array) $entity; $keys = array_keys($entity); $key = $keys[0]; $group = $entity_type . $entity[$key]; break;
+  }
+  return $group;
+}
+
+function _itweak_upload_isimage($file) {
+  $errors = file_validate_is_image($file);
+  return empty($errors);
+}
+
+function _itweak_upload_image_style_options() {
+  $image_styles['_none'] = t('None');
+  $image_styles['_original'] = t('Full image');
+  $image_styles += image_style_options(FALSE);
+  return $image_styles;
+}
+
+function _itweak_upload_display_options() {
+  $display_options = array(
+    ITU_DISPLAY_DISABLED => t('Display disabled'),
+    ITU_DISPLAY_ALL_FILES_NO_THUMBNAILS => t('Show files list (images included as files)'),
+    ITU_DISPLAY_ALL_FILES_WITH_THUMBNAILS => t('Show files list with image thumbnails'),
+    ITU_DISPLAY_FILES_AND_GALLERY => t('Show files list and image gallery'),
+    ITU_DISPLAY_GALLERY => t('Show image gallery only')
+  );
+  return $display_options;
+}
+
+/*
+ * Collect list of available handlers for gallery type options.
+ */
+function _itweak_upload_gallery_type_options() {
+  $ret = array();
+  $ret['itu'] = t('iTweak Upload');
+  if (module_exists('jcarousel')) {
+    $ret['jcarousel'] = t('jCarousel');
+  }
+  if (module_exists('jcarousellite')) {
+    $ret['jcarousellite'] = t('jCarousel Lite');
+  }
+  return $ret;
+}
+
+/* jCarousel Lite additional options
+          '#description' => t("Additional options. See !link for more detail.<br /><code>
+btnGo: ['.externalControl .1', '.externalControl .2', '.externalControl .3'],<br />
+auto: null,<br />
+speed: 200,<br />
+vertical: false,<br />
+circular: true,<br />
+visible: 3,<br />
+start: 0,<br />
+scroll: 1,
+</code>", array('!link' => l('documentation', 'http://www.gmarwaha.com/jquery/jcarousellite/index.php', array('target' => '_blank', 'fragment' => 'doc')))),
+*/
+
+function _itweak_upload_gallery_type_default() {
+  if (module_exists('jcarousel')) {
+    return 'jcarousel';
+  }
+  if (module_exists('jcarousellite')) {
+    return 'jcarousellite';
+  }
+  return 'itu';
+}
+
+/*
+ * Collect list of available handlers for link options.
+ * @see _itweak_upload_setting_link_mode_options() in D6
+ *
+ * @ingroup lightbox
+ */
+function _itweak_upload_lightbox_link_mode_options() {
+  $ret = array();
+  $ret['none'] = t('Open image');
+  if (module_exists('lightbox2')) {
+    $ret['lightbox2'] = t('Lightbox');
+    $ret['lightbox2grouped'] = t('Lightbox Grouped');
+    $ret['lightbox2slideshow'] = t('Lightbox Slideshow');
+  }
+  if (module_exists('colorbox')) {
+    $ret['colorbox'] = t('Colorbox');
+  }
+  if (module_exists('fancybox')) {
+    $ret['fancybox'] = t('Fancybox');
+  }
+  if (module_exists('shadowbox')) {
+    $ret['shadowbox'] = t('Shadowbox');
+    $ret['shadowboxgrouped'] = t('Shadowbox Grouped');
+  }
+  if (module_exists('highslide') || module_exists('highslide2')) {
+    $ret['highslide'] = t('Highslide');
+    $ret['highslidegrouped'] = t('Highslide Grouped');
+  }
+  return $ret;
+}
+
+/*
+ *
+ * @see _itweak_upload_setting_link_default() in D6
+ *
+ * @ingroup lightbox
+ */
+function _itweak_upload_lightbox_link_default() {
+  if (module_exists('lightbox2')) {
+    return 'lightbox2grouped';
+  }
+  if (module_exists('colorbox')) {
+    return 'colorbox';
+  }
+  if (module_exists('fancybox')) {
+    return 'fancybox';
+  }
+  if (module_exists('shadowbox')) {
+    return 'shadowboxgrouped';
+  }
+  if (module_exists('highslide') || module_exists('highslide2')) {
+    return 'highslidegrouped';
+  }
+  return 'none';
+}
+
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function itweak_upload_field_formatter_info() {
+  return array(
+    'itu_file_table' => array(
+      'label' => t('iTweak Upload'),
+      'field types' => array('file', 'image'),
+      'settings' => array(
+        'files_display_mode' => ITU_DISPLAY_DEFAULT,
+        'mime_icon_directory' => ITU_ICON_DIRECTORY_DEFAULT,
+        'thumbnail_style' => 'AttachmentThumbnail',
+        'show_caption' => FALSE,
+        'gallery_type' => _itweak_upload_gallery_type_default(),
+        'gallery_limit' => '',
+        'image_link_mode' => _itweak_upload_lightbox_link_default(),
+        'show_title' => TRUE,
+        'open_image_style' => '_original',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function itweak_upload_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $image_styles = _itweak_upload_image_style_options();
+  $display_options = _itweak_upload_display_options();
+  $gallery_type_options = _itweak_upload_gallery_type_options();
+  $image_link_mode_options = _itweak_upload_lightbox_link_mode_options();
+
+  $info_image_styles = (user_access('administer image styles')
+    ? ' ' . t('Image styles can be edited on !link page.', array('!link' => l('Image styles', 'admin/config/media/image-styles')))
+    : '');
+
+  // 'itweak_upload_node_display', 'itweak_upload_teaser_display', 'itweak_upload_comment_display' in D6
+  $form['files_display_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Attachments display style'),
+    '#default_value' => (!empty($settings['files_display_mode'])) ? $settings['files_display_mode'] : ITU_DISPLAY_DEFAULT,
+    '#options' => $display_options,
+    '#description' => t('Select display mode for attached files and images.')
+  );
+
+  $form['mime_icon_directory'] = array(
+    '#type' => 'textfield',
+    '#title' => t('File mime icons'),
+    '#default_value' => (!empty($settings['mime_icon_directory']) || $settings['mime_icon_directory'] === '') ? $settings['mime_icon_directory'] : ITU_ICON_DIRECTORY_DEFAULT,
+    '#description' => t('Select directory on the server with mime icons for image files relative to base Drupal path. Leave blank to use Drupal default icons.'),
+  );
+
+  // 'itweak_upload_thumbnail_preset_default' in D6
+  $form['thumbnail_style'] = array(
+    '#type' => 'select',
+    '#title' => t('Image thumbnail'),
+    '#default_value' => (!empty($settings['thumbnail_style'])) ? $settings['thumbnail_style'] : (isset($image_styles['AttachmentThumbnail']) ? 'AttachmentThumbnail' : '_none'),
+    '#options' => $image_styles,
+    '#description' => t('Select image style for image thumbnails.')
+      . $info_image_styles,
+  );
+
+if (0)  $form['show_caption'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Image caption'),
+    '#default_value' => (isset($settings['show_caption'])) ? $settings['show_caption'] : FALSE,
+    '#description' => t('Enable to include caption with image thumbnails.'),
+  );
+
+  // 'itweak_upload_gallery_type_default' in D6
+  $form['gallery_type'] = array(
+    '#type' => 'select',
+    '#title' => t('Image gallery style'),
+    '#default_value' => (!empty($settings['gallery_type'])) ? $settings['gallery_type'] : _itweak_upload_gallery_type_default(),
+    '#options' => $gallery_type_options,
+    '#description' => t('Select image gallery style to use for image thumbnails.'),
+  );
+
+  $form['gallery_limit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Gallery thumbnails limit'),
+    '#default_value' => (!empty($settings['gallery_limit'])) ? $settings['gallery_limit'] : '',
+    '#element_validate' => array('element_validate_integer_positive'),
+    '#description' => t('Enter how many thumbnails to limit the gallery to. Leave blank to have no limit.'),
+  );
+
+  // 'itweak_upload_thumbnail_link_default' in D6
+  $form['image_link_mode'] = array(
+    '#type' => 'select',
+    '#title' => t('Image open mode'),
+    '#default_value' => (!empty($settings['image_link_mode'])) ? $settings['image_link_mode'] : _itweak_upload_lightbox_link_default(),
+    '#options' => $image_link_mode_options,
+    '#description' => t('Select opening mode for image thumbnails.'),
+  );
+
+  unset($image_styles['_none']); // $image_styles['_none'] = t('Download file');
+  $form['open_image_style'] = array(
+    '#type' => 'select',
+    '#title' => t('Open image style'),
+    '#default_value' => ($settings['open_image_style'] != '') ? $settings['open_image_style'] : (isset($image_styles['large'])? 'large': '_original'),
+    '#options' => $image_styles,
+    '#description' => t('Select opening image style for image links.'),
+  );
+
+  $form['show_title'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Image title'),
+    '#default_value' => (isset($settings['show_title'])) ? $settings['show_title'] : TRUE,
+    '#description' => t('Enable to include title attribute in image thumbnails.'),
+    '#description' => t('Check to show the file name on the image opened from thumbnails (only if selected open image style supports it).')
+  );
+
+//  $form['highslide_first'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Only first image must be showed (for multiple fields)'),
+//    '#default_value' => $settings['highslide_first'],
+//  );
+//
+//  $form['highslide_gallery'] = array(
+//    '#type' => 'checkbox',
+//    '#title' => t('Use gallery (for multiple fields)'),
+//    '#default_value' => $settings['highslide_gallery'],
+//  );
+
+//  $image_option_default = _itweak_upload_encode_derivative();
+
+
+//  _itweak_upload_insert_form($form['itweak_upload'], 'default');
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function itweak_upload_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $image_styles = _itweak_upload_image_style_options();
+  $display_options = _itweak_upload_display_options();
+  $gallery_type_options = _itweak_upload_gallery_type_options();
+  $image_link_mode_options = _itweak_upload_lightbox_link_mode_options();
+
+  $files_display_mode = $settings['files_display_mode'];
+  $files_display_mode_name = isset($display_options[$files_display_mode]) ? $display_options[$files_display_mode] : $display_options[ITU_DISPLAY_DEFAULT];
+
+  $gallery_type = (!empty($settings['gallery_type'])) ? $settings['gallery_type'] : _itweak_upload_gallery_type_default();
+  $gallery_type_name = isset($gallery_type_options[$gallery_type]) ? $gallery_type_options[$gallery_type] : $gallery_type_options['itu'];
+  $gallery_limit = (!empty($settings['gallery_limit'])) ? $settings['gallery_limit'] : '';
+  $gallery_limit_name = empty($gallery_limit) ? '' : t(' limit @limit thumbnails', array('@limit' => $gallery_limit));
+
+  $thumbnail_style = $settings['thumbnail_style'];
+  $thumbnail_style_name = (($thumbnail_style != '_none') && isset($image_styles[$thumbnail_style]))
+    ? t('@thumbnail thumbnails', array('@thumbnail' => $image_styles[$thumbnail_style]))
+    : $image_styles['_none'];
+
+  unset($image_styles['_none']); // $image_styles['_none'] = t('Download file');
+  $open_image_style = ($settings['open_image_style'] != '') ? $settings['open_image_style'] : t('Original image');
+  $open_image_style_name = isset($image_styles[$open_image_style]) ? $image_styles[$open_image_style] : $image_styles['_none'];
+
+  $image_link_mode = ($settings['image_link_mode'] != '') ? $settings['image_link_mode'] : _itweak_upload_lightbox_link_default();
+  $image_link_mode_name = (($image_link_mode != 'none') && isset($image_link_mode_options[$image_link_mode]))
+    ? t('open as @fullsize in @open frame', array('@fullsize' =>$open_image_style_name,'@open' => $image_link_mode_options[$image_link_mode]))
+    : t('@open @fullsize', array('@fullsize' =>$open_image_style_name, '@open' => $image_link_mode_options['none']));
+
+  $mime_icon_directory = ($files_display_mode < ITU_DISPLAY_GALLERY)
+    ? ', ' . (!empty($settings['mime_icon_directory'])
+        ? t('file icons from "@dir" directory', array('@dir' => $settings['mime_icon_directory']))
+        : t('Drupal default file icons'))
+    : '';
+
+//@todo: Implement summary for all settings:
+/*
+'files_display_mode' => ITU_DISPLAY_DEFAULT,
+'mime_icon_directory' => ITU_ICON_DIRECTORY_DEFAULT,
+'thumbnail_style' => 'AttachmentThumbnail',
+        'show_caption' => FALSE,
+'gallery_type' => _itweak_upload_gallery_type_default(),
+'gallery_limit' => '',
+'image_link_mode' => _itweak_upload_lightbox_link_default(),
+        'show_title' => TRUE,
+'open_image_style' => '_original',
+*/
+
+  $summary = ($files_display_mode == ITU_DISPLAY_DISABLED)
+    ? $files_display_mode_name
+    : t('@display_mode@gallery with @thumbnail @image_link_mode@mime_icon_directory',
+        array(
+          '@display_mode' => $files_display_mode_name,
+          '@gallery' => ($files_display_mode >= ITU_DISPLAY_FILES_AND_GALLERY)
+            ? t(' (@gallery_type@gallery_limit)', array('@gallery_type' => $gallery_type_name, '@gallery_limit' => $gallery_limit_name))
+            : '',
+          '@thumbnail' => $thumbnail_style_name,
+          '@image_link_mode' => $image_link_mode_name,
+          '@fullsize' => $open_image_style_name,
+          '@mime_icon_directory' => $mime_icon_directory,
+        )
+      );
+//  if ($settings['highslide_first']) $summary .= t(', first only');
+//  if ($settings['highslide_gallery']) $summary .= t(', gallery');
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function itweak_upload_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+//drupal_set_message('DEBUG itweak_upload_field_formatter_view field=<pre>'.htmlentities(print_r($field,1)).'</pre> display=<pre>'.htmlentities(print_r($display,1)).'</pre> items=<pre>'.htmlentities(print_r($items,1)).'</pre>');
+  $element = array();
+
+  $settings = $display['settings'];
+  $files_display_mode = $settings['files_display_mode'];
+  $icon_directory = $settings['mime_icon_directory'];
+  $gallery_limit = !empty($settings['gallery_limit']) ? $settings['gallery_limit'] : -1;
+  $group = _itweak_upload_group_id($entity_type, $entity);
+
+  switch ($display['type']) {
+    case 'itu_file_table':
+      if (!empty($items)) {
+        $cnt_other = _itweak_upload_preprocess_files($items, $thumbnails, $display, $entity_type, $entity, $field['type']);
+        if ($cnt_other) {
+          if ($files_display_mode != ITU_DISPLAY_GALLERY) {
+            // Display all files in a single element.
+            $element[] = array(
+              '#theme' => 'file_formatter_table_itu',
+              '#items' => $items,
+              '#icon_directory' => $icon_directory,
+            );
+          }
+        }
+        else {
+//?          unset($node->content['files']);
+        }
+//        // Preserve files in private property (this prevents upload.module from showing the files)
+//        $node->itu_files = $node->files;
+//        // Clear files list so other modules will not try to display it
+//        $node->files = array();
+
+        if (count($thumbnails)) {
+          $options = array(
+            'gallery_type' => $settings['gallery_type'],
+          );
+            $element[] = array(
+              '#theme' => 'itweak_upload_image_gallery_body',
+              '#items' =>  $thumbnails,
+              '#limit' => $gallery_limit,
+              '#options' => $options,
+            );
+        }
+      }
+//?      if ($files_display_mode && $node->files && !user_access('view uploaded files')) {
+//        $node->content['itweak_upload'] = array(
+//          '#value' => theme('view_uploaded_files_forbidden', $node),
+//          '#weight' => 49,
+//        );
+//      }
+
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Returns HTML for a link to a file.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - file: A file object to which the link will be created.
+ *   - icon_directory: (optional) A path to a directory of icons to be used for
+ *     files. Defaults to the value of the "file_icon_directory" variable.
+ *   - show_icon: TRUE to show icon (like theme_file_link())
+ *   - options: (optional) options for the link.
+ *
+ * @ingroup themeable
+ */
+function theme_file_link_itu($variables) {
+  $file = $variables['file'];
+  $icon_directory = empty($variables['icon_directory']) ? NULL : $variables['icon_directory'];
+  $show_icon = empty($variables['show_icon']) ? FALSE : TRUE;
+  $options = empty($variables['options']) ? array() : $variables['options'];
+  $options += array('attributes' => array());
+
+//?  $url = empty($file->path) ? file_create_url($file->uri) : $file->path;
+  $url = file_create_url($file->uri);
+  $icon = $show_icon
+    ? theme('file_icon_itu', array('file' => $file, 'icon_directory' => $icon_directory)) . ' '
+    : '';
+
+  // Set options as per anchor format described at
+  // http://microformats.org/wiki/file-format-examples
+  $options['attributes'] += array('type' => $file->filemime . '; length=' . $file->filesize);
+
+  // Use the description as the link text if available.
+  if (empty($file->description)) {
+    $link_text = $file->filename;
+  }
+  else {
+    $link_text = $file->description;
+    $options['attributes']['title'] = check_plain($file->filename);
+  }
+
+  // [#1253692] by smokris: Add a hook for other modules to alter attachment links
+  $data = compact('file', 'link_text', 'url', 'options');
+  // 'itweak_uploads_prerender' in D6, renamed to 'itweak_upload_file_link_prerender'
+  drupal_alter('itweak_upload_file_link_prerender', $data);
+  extract($data);
+
+  return '<span class="file">' . $icon . l($link_text, $url, $options) . '</span>';
+}
+
+/**
+ * Creates a URL to the icon for a file object.
+ *
+ * @param $file
+ *   A file object.
+ * @param $icon_directory
+ *   (optional) A path to a directory of icons to be used for files. Defaults to
+ *   the value of the "file_icon_directory" variable.
+ *
+ * @return
+ *   A URL string to the icon, or FALSE if an appropriate icon cannot be found.
+ */
+function itweak_upload_file_icon_url($file, $icon_directory = NULL) {
+  // Try to find extension icon
+  if (!empty($icon_directory)) {
+    $ext = strtolower(array_pop(explode('.', $file->filename)));
+    $icon_path = $icon_directory . '/' . $ext . '.png';
+    if (file_exists($icon_path)) {
+      return base_path() . $icon_path;
+    }
+  }
+  // If extension icon not found, try mime icons
+  return file_icon_url($file, $icon_directory);
+}
+
+/**
+ * Returns HTML for an image with an appropriate icon for the given file.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - file: A file object for which to make an icon.
+ *   - icon_directory: (optional) A path to a directory of icons to be used for
+ *     files. Defaults to the value of the "file_icon_directory" variable.
+ *
+ * @ingroup themeable
+ */
+function theme_file_icon_itu($variables) {
+  $file = $variables['file'];
+  $icon_directory = empty($variables['icon_directory']) ? NULL : $variables['icon_directory'];
+
+  $mime = check_plain($file->filemime);
+  $icon_url = itweak_upload_file_icon_url($file, $icon_directory);
+  return '<img class="file-icon" alt="" title="' . $mime . '" src="' . $icon_url . '" />';
+}
+
+/**
+ * Returns HTML for a file attachments table.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - items: An array of file attachments.
+ *   - icon_directory: (optional) A path to a directory of icons to be used for
+ *     files. Defaults to the value of the "file_icon_directory" variable.
+ *
+ * @ingroup themeable
+ */
+function theme_file_formatter_table_itu($variables) {
+  $icon_directory = empty($variables['icon_directory']) ? NULL : $variables['icon_directory'];
+  $stats = FALSE; // function_exists('_download_count_stats');
+
+  $header = $stats
+    ? array(
+        array('data' => t('Preview'), 'class' => 'preview'),
+        array('data' => t('Attachment'), 'class' => 'file'),
+//        array('data' => t('Downloads'), 'class' => 'download_count', ), array('data' => t('Last download'), 'class' => 'download_last'),
+        array('data' => t('Downloads / Last Download'), 'class' => 'download_stats', 'colspan' => 2),
+        array('data' => t('Size'), 'class' => 'size'),
+      )
+    : array(
+        array('data' => t('Preview'), 'class' => 'preview'),
+        array('data' => t('Attachment'), 'class' => 'file'),
+        array('data' => t('Size'), 'class' => 'size'),
+      );
+  $rows = array();
+  foreach ($variables['items'] as $delta => $item) {
+    $file = (object) $item;
+    if ($file->display && empty($file->remove) && empty($file->hidden)) {
+      $ext = strtolower(array_pop(explode('.', $file->filename)));
+//      $url = empty($file->path) ? file_create_url($file->uri) : $file->path;
+//      $text = !empty($file->description) ? $file->description : $file->filename;
+
+      $row = array();
+      // Column 1 (preview or icon)
+      if (isset($file->preview)) {
+        $row[] = array(
+          'data' => $file->preview['#value'],
+          'class' => 'mime mime-' . $ext,
+        );
+      }
+      else {
+        $row[] = array(
+          'data' => theme('file_icon_itu', array('file' => $file, 'icon_directory' => $icon_directory)),
+          'class' => 'mime mime-' . $ext,
+        );
+      }
+      $options = isset($file->preview_options) ? $file->preview_options : array();
+      if (!$file->access || !(isset($file->preview) || !$file->lightbox_supported || isset($options['custom']))) {
+        $options = array();
+      }
+
+      // Column 2 (file name / link)
+      $row[] = array(
+//        'data' => l($text, $url, $options),
+        'data' => theme('file_link_itu', array('file' => $file, 'options' => $options)),
+        'class' => 'file',
+      );
+      // Column 3/4 (download stats, if available)
+      if ($stats) {
+        _download_count_stats($file);
+        $row[] = array('data' => $file->download_count, 'class' => 'download_count',);
+        $row[] = array('data' => $file->download_last , 'class' => 'download_last',);
+      }
+      // Column 3 (or 5 with download stats, file size)
+      $row[] = array(
+        'data' => format_size($file->filesize),
+        'class' => 'size',
+      );
+      $rows[] = $row;
+    }
+  }
+//drupal_set_message('DEBUG mime='.file_get_mimetype('private://video1.exe').' files=<pre>'.htmlentities(print_r($variables['items'],1)).'</pre> rows=<pre>'.htmlentities(print_r($rows,1)).'</pre>');
+  return empty($rows)
+    ? ''
+    : '<div class="itu-attachments">'
+      . theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array(
+          'class' => array('itu-attachment-list', ($stats ? 'withstats' : 'withoutstats')),
+//?          'id' => 'attachments',
+      )))
+      . '</div>';
+}
+
+/**
+ * Theme function to show image attachments in an image gallery (full node view, also for teaser view in D7).
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - items: An array of file attachments, incl. links to thumbnails.
+ *   - limit: Maximum number of thumbnails to display.
+ *   - options: (optional) array of options for the gallery and thumbnail links. See theme_itweak_upload_image_gallery().
+ *
+ * @return
+ *  The themed list
+ */
+function theme_itweak_upload_image_gallery_body($variables) {
+  $files = $variables['items'];
+  $limit = $variables['limit'];
+  $options = $variables['options'];
+  $items = array();
+
+  foreach ($files as $file) {
+    if ($limit != -1 && count($items) >= $limit) {
+      // @todo Here we can initiate the "read more" link for teaser
+      break;
+    }
+    $file = (object)$file;
+    if ($file->display && empty($file->remove)) {
+      if (isset($file->preview)) {
+        $items[] = array(
+          'data' => $file->preview['#value'],
+          'class' => '',
+        );
+      }
+    }
+  }
+  if (count($items)) {
+    return theme('itweak_upload_image_gallery', array('items' => $items, 'options' => $options));
+  }
+}
+
+/**
+ * Theme function to show image attachments
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - list: An array of file attachments, incl. links to thumbnails.
+ *   - limit: Maximum number of thumbnails to display.
+ *   - options: (optional) array of options for the gallery and thumbnail links.
+ *     - (optional) 'gallery_type' element is given, it selects custom image gallery type.
+ *
+ * @return
+ *  The themed list
+ */
+function theme_itweak_upload_image_gallery($variables) {
+  $list = $variables['items'];
+  $options = $variables['options'];
+
+  $gallery_type = (isset($options['gallery_type'])) ? $options['gallery_type'] : _itweak_upload_gallery_type_default();
+  $carousel_visible = ITU_CAROUSEL_VISIBLE_ITEMS;
+  $div_class  = 'itu-attachment-images';
+  $list_class = 'itu-attachment-thumbs';
+  $jcarousellite = FALSE;
+  // Check modules: we want to fallback if setting is left behind from disabled module
+  if ($gallery_type == 'jcarousel' && !module_exists('jcarousel')) {
+    $gallery_type = 'itu';
+  }
+  if ($gallery_type == 'jcarousellite') {
+    if (!module_exists('jcarousellite')
+      || count($list) <= $carousel_visible) { // This avoids jCarousel Lite bug with tiles fewer than carousel size
+      $gallery_type = 'itu';
+    } else
+      $jcarousellite = TRUE;
+  }
+  if ($gallery_type != '' && $gallery_type != 'itu') {
+    $div_class  .= ' ' . $gallery_type; // add class
+    $list_class .= '-' . $gallery_type; // change class
+  }
+
+  $output = '<div class="' . $div_class . '">';
+  if ($jcarousellite) $output .= '<a href="#" class="itu-attachment-jcarousellite-prev">&nbsp</a>';
+  $output .= theme('item_list', array('items' => $list, 'type' => 'ul', 'attributes' => array('class' => $list_class)));
+  if ($jcarousellite) $output .= '<a href="#" class="itu-attachment-jcarousellite-next">&nbsp</a>';
+  $output .= '</div>';
+  return $output;
+}
+
+/**
+ * Retrieve link options - carries handler setting for link display mode.
+ * @param $file
+ *  File object, same type as nodeapi 'view'
+ * @param $display
+ *  $display parameter from hook_field_formatter_view().
+ * @param $entity_type
+ *  $entity_type parameter from hook_field_formatter_view().
+ * @param $entity
+ *  $entity parameter from hook_field_formatter_view().
+ * @return
+ *  Options array for the thumbnail link l()
+ *
+ * The following variables can be defined to select thumbnail link handler:
+ *  'none' if none of the settings are defined
+ *  itweak_upload_thumbnail_link_default             - Site-wide default
+ *  itweak_upload_thumbnail_link_default_$type       + Default for all thumbnails in content $type
+ *  itweak_upload_thumbnail_link_node_$type          - Regular attachments thumbnails
+ *  itweak_upload_thumbnail_link_images_teaser_$type - Gallery images in teaser view
+ *  itweak_upload_thumbnail_link_images_node_$type   - Gallery images in node view
+ *  itweak_upload_thumbnail_link_comment_$type       - Regular comment attachments thumbnails
+ *  itweak_upload_thumbnail_link_comment_images      - Gallery images in comment
+ *            Where:                                 + means that the setting is already implemented in GUI
+ *
+ * @see _itweak_upload_get_link_options() in D6
+ *
+ * @ingroup lightbox
+ */
+function _itweak_upload_lightbox_get_link_options($file, $display, $entity_type, $entity) {
+  $settings = $display['settings'];
+  $url = empty($file->path) ? file_create_url($file->uri) : $file->path;
+
+  $group = _itweak_upload_group_id($entity_type, $entity);
+  $link_text = $text = !empty($file->description) ? $file->description : $file->filename;
+  $options = array();
+  $link_mode = $settings['image_link_mode'];
+  $handler = '';
+  if (module_exists('lightbox2')) {
+    switch ($link_mode) {
+      case 'lightbox2':
+        $handler = 'lightbox';
+        $handler .= '[<a href="' . $url . '">' . $text . '</a>]';
+        $options['attributes'] = array('rel' => $handler);
+        break;
+      case 'lightbox2grouped':
+        $handler = 'lightbox' . ($group ? '[attachment-thumb-' . $group . ']' : '[attachment-thumb]');
+        $handler .= '[<a href="' . $url . '">' . $text . '</a>]';
+        $options['attributes'] = array('rel' => $handler);
+        break;
+      case 'lightbox2slideshow':
+        $handler = 'lightshow' . ($group ? '[attachment-thumb-' . $group . ']' : '[attachment-thumb]');
+        $options['attributes'] = array('rel' => $handler);
+        break;
+    }
+  }
+  if (module_exists('colorbox')) {
+    switch ($link_mode) {
+      case 'colorbox':
+        $handler = ($group ? 'node_' . $group : 'node');
+        $options['attributes'] = array('class' => 'colorbox', 'rel' => $handler);
+        break;
+    }
+  }
+  if (module_exists('fancybox')) {
+    switch ($link_mode) {
+      case 'fancybox':
+        $handler = ($group ? 'node_' . $group : 'node');
+        $options['attributes'] = array('class' => 'fancybox', 'rel' => $handler);
+        break;
+    }
+  }
+  if (module_exists('shadowbox')) {
+    switch ($link_mode) {
+      case 'shadowbox':
+//        $handler = ($group ? 'node_' . $group : 'node');
+        $handler = 'shadowbox';
+        $options['attributes'] = array('class' => 'shadowbox', 'rel' => $handler);
+        break;
+      case 'shadowboxgrouped':
+        $handler = 'shadowbox' . ($group ? '[' . $group . ']' : '');
+        $options['attributes'] = array('class' => 'shadowbox', 'rel' => $handler);
+        break;
+    }
+  }
+  if (module_exists('highslide') || module_exists('highslide2')) {
+    switch ($link_mode) {
+      case 'highslide':
+//?        $handler = ($group ? $group : 'node');
+        $options['attributes'] = array('class' => 'highslide',
+          'onclick' => 'return hs.expand(this)');
+        break;
+      case 'highslidegrouped':
+        $handler = ($group ? $group : 'node');
+        $options['attributes'] = array('class' => 'Ahighslide',
+          'onclick' => 'return hs.expand(this, { slideshowGroup: \'' . $handler . '\' });');
+        break;
+    }
+  }
+  $options['link_mode'] = $link_mode;
+  _itweak_upload_lightbox_load($options);
+  unset($options['link_mode']);
+
+  return $options;
+}
+
+/*
+ * Ensure that the handler is loaded.
+ * Not in D6
+ *
+ * @ingroup lightbox
+ */
+function _itweak_upload_lightbox_load($options) {
+  // All functions called here from each of the supported modules should have inner guard from multiple loads (i.e. static $loaded)
+  // If the module does not provide one, make sure it is guarded here.
+  $link_mode = $options['link_mode'];
+  if (module_exists('lightbox2')) {
+    switch ($link_mode) {
+      case 'lightbox2':
+      case 'lightbox2grouped':
+      case 'lightbox2slideshow':
+         // guarded from multiple loads:
+        lightbox2_add_files();
+        break;
+    }
+  }
+  if (module_exists('colorbox')) {
+    switch ($link_mode) {
+      case 'colorbox':
+//@todo: implement
+        break;
+    }
+  }
+  if (module_exists('fancybox')) {
+    switch ($link_mode) {
+      case 'fancybox':
+//@todo: implement
+        break;
+    }
+  }
+  if (module_exists('shadowbox')) {
+    switch ($link_mode) {
+      case 'shadowbox':
+      case 'shadowboxgrouped':
+//@todo: implement
+        break;
+    }
+  }
+  if (module_exists('highslide')) {
+    switch ($link_mode) {
+      case 'highslide':
+      case 'highslidegrouped':
+         // guarded from multiple loads:
+        highslide_field_formatter_view('file', NULL, NULL, NULL, NULL, array(), array('settings' => array()));
+        break;
+    }
+  }
+  elseif (module_exists('highslide2')) {
+    switch ($link_mode) {
+      case 'highslide':
+      case 'highslidegrouped':
+//@todo: implement
+        break;
+    }
+  }
+}
+
+/*
+ * Check if lightbox can open given file.
+ * Not in D6
+ * @param $file
+ *   File object.
+ * @param $link_mode
+ *   Link open mode setting.
+ * @param $type
+ *   Type of file extensions to check, 'image', 'movie'/'video', 'web', 'misc', 'all'.
+ *
+ * @ingroup lightbox
+ */
+function _itweak_upload_lightbox_supported($file, $link_mode, $type = 'all') {
+  $ext = strtolower(array_pop(explode('.', $file->filename)));
+  $ret = _itweak_upload_isimage($file); // By default all image files can be open
+  if (module_exists('lightbox2')) {
+    switch ($link_mode) {
+      case 'lightbox2':
+      case 'lightbox2grouped':
+      case 'lightbox2slideshow':
+        if ($type == 'video') {
+          $type = 'movie';
+        }
+        $ret = lightbox2_supported_file_extension($ext, $type);
+        break;
+    }
+  }
+  if (module_exists('colorbox')) {
+    switch ($link_mode) {
+      case 'colorbox':
+//@todo: implement
+        break;
+    }
+  }
+  if (module_exists('fancybox')) {
+    switch ($link_mode) {
+      case 'fancybox':
+//@todo: implement
+        break;
+    }
+  }
+  if (module_exists('shadowbox')) {
+    switch ($link_mode) {
+      case 'shadowbox':
+      case 'shadowboxgrouped':
+//@todo: implement
+        break;
+    }
+  }
+  if (module_exists('highslide')) {
+    switch ($link_mode) {
+      case 'highslide':
+      case 'highslidegrouped':
+//@todo: implement
+        break;
+    }
+  }
+  elseif (module_exists('highslide2')) {
+    switch ($link_mode) {
+      case 'highslide':
+      case 'highslidegrouped':
+//@todo: implement
+        break;
+    }
+  }
+  return $ret;
+}
+
+/**
+ * Worker function for preprocessing filefield files.
+ * @param $files
+ *  Array of file objects (descriptors from filefield).
+ * @param $thumbnails
+ *  Returned array of gallery images.
+ * @param $display
+ *  $display parameter from hook_field_formatter_view().
+ * @param $entity_type
+ *  $entity_type parameter from hook_field_formatter_view().
+ * @param $entity
+ *  $entity parameter from hook_field_formatter_view().
+ * @param $field_type
+ *  Field type to pass as 2nd arg to hook_file_download()
+ * @return
+ *  Count of files left in the $files.
+ */
+function _itweak_upload_preprocess_files(&$files, &$thumbnails, $display, $entity_type, $entity, $field_type = 'file') {
+//drupal_set_message('DEBUG _itweak_upload_preprocess_files display=<pre>'.htmlentities(print_r($display,1)).'</pre>');
+  $settings = $display['settings'];
+  $files_display_mode = $settings['files_display_mode'];
+  $thumbnail_style = $settings['thumbnail_style'];
+  $open_image_style = $settings['open_image_style'];
+  $show_title = $settings['show_title'];
+  $show_caption = $settings['show_caption'];
+
+  // Build list of attached files and filter out images.
+  $thumbnails = array();
+  $cnt_other = 0;
+  foreach ($files as $delta => $file) {
+//drupal_set_message('DEBUG 1 delta='.$delta.' file=<pre>'.htmlentities(print_r($file,1)).'</pre>');
+    $file = (object)$file;
+    if (!isset($file->display)) $file->display = TRUE; // imagefield does not have display property
+    if ($file->display && empty($file->remove) && file_exists($file->uri)) {
+      $file->lightbox_supported = _itweak_upload_lightbox_supported($file, $open_image_style);
+      if (empty($file->filemime)) {
+        $file->filemime = file_get_mimetype($file->uri);
+      }
+
+      // Check if user can download the file - no preview if can't.
+      // Honor the value already set
+      if (!isset($file->access)) {
+        $file->access = TRUE;
+      }
+      // Call hook_file_download regardless of public downloads - accomodate private_upload.module
+      // Undocumented 2nd argument is $field_type in file_file_download()
+      // Undocumented 3rd argument, TRUE indicates it is just an access check
+      // Works with download_count.module patched by [#720686] #1
+      $headers = module_invoke_all('file_download', $file->uri, $field_type, TRUE);
+//drupal_set_message('DEBUG 2 headers=<pre>'.htmlentities(print_r($headers,1)).'</pre>');
+      if (in_array(-1, $headers) || empty($headers)) {
+        $file->access = FALSE;
+      }
+
+      if ($file->lightbox_supported && $open_image_style != '_original' && $open_image_style != '_none') {
+        $file->path = ($open_image_style != '') ? image_style_url($open_image_style, $file->uri) : file_create_url($file->uri);
+      }
+
+      $preview = FALSE;
+      if ($file->access && $files_display_mode > ITU_DISPLAY_ALL_FILES_NO_THUMBNAILS) {
+        if ($file->lightbox_supported && $open_image_style != '_none') {
+          $options = _itweak_upload_lightbox_get_link_options($file, $display, $entity_type, $entity);
+        }
+        else {
+          $options = array();
+        }
+        $preview = module_invoke_all('itweak_upload_preview', $file, $thumbnail_style, $show_title, $show_caption, $options);
+      }
+//drupal_set_message('DEBUG 3 delta='.$delta.' cnt_other='.$cnt_other.' file=<pre>'.htmlentities(print_r($file,1)).'</pre>');
+      if ($files_display_mode == ITU_DISPLAY_ALL_FILES_NO_THUMBNAILS || !$preview || $preview['#type'] != 'item') {
+        $cnt_other += 1; // Leave in the files list
+      }
+      else {
+        $file->preview = $preview;
+        $file->preview_options = $options;
+        if ($files_display_mode == ITU_DISPLAY_ALL_FILES_WITH_THUMBNAILS) {
+          // Show image with regular files, just use thumbnail
+          $cnt_other += 1;
+        }
+        else if ($files_display_mode > ITU_DISPLAY_ALL_FILES_WITH_THUMBNAILS) {
+          // Show image in the gallery
+          $thumbnails[] = $file;
+          // Mark file as hidden so image won't appear as attachment, but keep it in the list
+          $file->hidden = true;
+        }
+      }
+//drupal_set_message('DEBUG 4 delta='.$delta.' cnt_other='.$cnt_other.' file=<pre>'.htmlentities(print_r($file,1)).'</pre>');
+    }
+
+    if (is_object($files[$delta])) {
+      $files[$delta] = $file;
+    }
+    else {
+      $files[$delta] = (array) $file;
+    }
+  }
+//drupal_set_message('DEBUG 5 cnt_other='.$cnt_other.' settings=<pre>'.htmlentities(print_r($settings,1)).'</pre> files=<pre>'.htmlentities(print_r($files,1)).'</pre><br> thumbnails=<pre>'.htmlentities(print_r($thumbnails,1)).'</pre>');
+  return $cnt_other;
+}
+
+/**
+ * Implementation of hook_itweak_upload_preview().
+ * @param $file
+ *  File object. $file->path should be used first (if not empty) and $file->uri as a fallback for original file.
+ * @param $thumbnail_style
+ *  Name of thumbnail preset, or one of '_none' (no preview), '_original'.
+ * @param $show_title
+ *  If TRUE, insert thumbnail link title (used in open thumbnail method).
+ * @param $show_caption
+ *  If TRUE, shows thumbnail caption.
+ *  UNUSED hack: If 2 or 3 - appends text after link (for list-formatted view).
+ * @param $options
+ *  Optional. Array of options for the thumbnail link. Can add special handler.
+ * @return
+ *  FormsAPI item element with file preview (if available)
+ */
+function itweak_upload_itweak_upload_preview($file, $thumbnail_style, $show_title = FALSE, $show_caption = FALSE, $options = NULL) {
+  // Only check for images
+  if (_itweak_upload_isimage($file)) {
+    $text = empty($file->description) ? $file->filename : $file->description;
+    $url = empty($file->path) ? file_create_url($file->uri) : $file->path;
+    $title_text = $show_title ? $text : NULL;
+    $caption_text = $show_caption ? $text : NULL;
+    if ($thumbnail_style == '_none') {
+      return;
+    }
+    elseif ($thumbnail_style == '_original') {
+      $thumbnail = theme('image', array('path' => $file->uri, 'alt' => $text, 'title' => $title_text));
+    }
+    else {
+      $thumbnail = theme('image_style', array('style_name' => $thumbnail_style, 'path' => $file->uri, 'alt' => $text, 'title' => $title_text));
+    }
+    $text = check_plain($text);
+// Hack:    if ($show_caption > 1) { $thumbnail = $thumbnail . $text; $show_caption -= 2; }
+    return array(
+      '#type' => 'item',
+      '#value' => theme('itweak_upload_thumbnail', array('thumbnail' => $thumbnail, 'url' => $url, 'title_text' => $title_text, 'caption_text' => $caption_text, 'options' => $options)),
+    );
+
+  }
+}
+
+/**
+ * Theme function to show image attachment thumbnail
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - thumbnail: Link to thumbnail.
+ *   - url: URL to link thumbnail to.
+ *   - title_text:  (optional) Text for thumbnail open link title.
+ *   - caption_text: (optional) Text for thumbnail caption.
+ *   - options: (optional) array of options for the thumbnail link. See theme_itweak_upload_image_gallery().
+ *
+ * @return
+ *  The themed thumbnail
+ */
+function theme_itweak_upload_thumbnail($variables) {
+  $thumbnail = $variables['thumbnail'];
+  $url = $variables['url'];
+  $title_text = $variables['title_text'];
+  $caption_text = $variables['caption_text'];
+  $options = $variables['options'];
+//  $inner = '<div class="itu-attachment-thumb-wrap">' . $thumbnail . '</div>';
+//  if ($caption_text) {
+//    $inner = '<div class="itu-attachment-thumb-caption">' . $caption_text . '</div>'
+//                  . $inner;
+//  }
+//  $inner = '<div class="itu-attachment-thumb">' . $inner . '</div>';
+//  return l($inner, $url, array('html' => TRUE));
+
+  if (!$options) $options = array();
+  $options += array('html' => TRUE);
+  if ($title_text) {
+    $options['attributes']['title'] = $title_text;
+  }
+  //@todo: Figure out if we need to add type="..." and how per http://microformats.org/wiki/file-format-examples (see theme_file_link_itu())
+  $html = l($thumbnail, $url, $options);
+// FIXME: Due to CSS2/cross-browser capability to make shrink-wrap div, the below part does not work.
+// Any CSS guru can solve that? BTW, tooltips are shown by title in img.
+//  if ($caption_text) {
+//    $html = '<div class="itu-attachment-thumb-caption">' . $caption_text . '</div>' . $html;
+//    // FIXME: can use caption ABOVE vs. BELOW setting
+//  }
+  $html = '<div class="itu-attachment-thumb">' . $html . '</div>';
+  return $html;
+}
+

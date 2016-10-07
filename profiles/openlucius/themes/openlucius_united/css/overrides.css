@@ -1,0 +1,38 @@
+/* Table odd rows background gray */
+.view-messages-in-a-group tr.odd,
+.view-all-todo-lists-in-a-group tr.odd,
+.view-todos-on-todo-list-page tr.odd,
+#block-openlucius_files-ol-group-files tr.odd td,
+.view-todos-in-group-dashboard tr.odd {
+  background-color: #f9f9f9;
+}
+/* Glyphicons in table and table headings */
+table tr .glyphicon,
+table thead tr,
+.page-header {
+  color: #dd4814;
+}
+/* Comments panel for text documents */
+.node-type-ol-text-document .field-type-file .panel-body,
+.node-type-ol-text-document .notifies,
+.node-type-ol-text-document .notifies .panel-body,
+.node-type-ol-text-document .notifies .panel-body .panel-default,
+.node-type-ol-text-document .field-name-field-shared-loopin-email,
+#field-shared-loopin-email-values tr.draggable {
+  border: 0;
+  background-color: #fff6d5;
+  color: #000;
+}
+/* Break field to under content */
+.field-name-field-shared-loopin-email {
+  clear: both;
+}
+/* Panels background under body field in comments */
+.node-type-ol-todo .panel,
+.node-type-ol-message .panel {
+  background-color: #f5f5f5;
+  border: 0;
+}
+.view-id-groups .views-exposed-widget input[type="text"] {
+  height: 34px !important;
+}

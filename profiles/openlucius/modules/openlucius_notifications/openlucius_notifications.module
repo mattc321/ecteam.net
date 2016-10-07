@@ -1,0 +1,722 @@
+<?php
+/**
+ * @file
+ * This file contains notification related functions.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function openlucius_notifications_init() {
+  drupal_add_js(drupal_get_path('module', 'openlucius_notifications') . '/js/openlucius_notifications.js');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function openlucius_notifications_menu() {
+
+  // Start the menu items array.
+  $items = array();
+
+  // Page for notification settings configuration.
+  $items['admin/config/openlucius/notifications'] = array(
+    'title' => 'Notification settings',
+    'description' => 'Configure notification settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('openlucius_notifications_configuration_form'),
+    'access arguments' => array('administer notification configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'tab_parent' => 'admin/config/openlucius',
+  );
+
+  // Return the items.
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function openlucius_notifications_permission() {
+  return array(
+    'administer notification configuration' => array(
+      'title' => t('Configure notification settings'),
+      'description' => t('Permission to access notification settings'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function openlucius_notifications_theme() {
+  return array(
+    'openlucius_notifications_notification' => array(
+      'variables' => array('vars' => NULL),
+      'template' => 'templates/openlucius_notifications_notification',
+    ),
+    'openlucius_notifications_sent' => array(
+      'variables' => array('vars' => NULL),
+      'template' => 'templates/openlucius_notifications_sent',
+    ),
+  );
+}
+
+/**
+ * Class OpenluciusNotification.
+ * Contains the default notification class.
+ */
+class openlucius_Notification {
+
+  /**
+   * @var array $variables
+   * The variables to be used in the notification.
+   * @access private
+   */
+  private $variables = array();
+
+  /**
+   * @var string $body
+   * The body of the email to be sent.
+   * @access private
+   */
+  private $body;
+
+  /**
+   * @var string $subject
+   * The subject of the email to be sent.
+   * @access private
+   */
+  private $subject;
+
+  /**
+   * @var array $targets
+   * A list of mail addresses or user id's.
+   * @access private
+   */
+  private $targets = array();
+
+  /**
+   * Function to set the heading for the notification.
+   *
+   * @param string $user_name
+   *   The username to be set on the heading.
+   *
+   * @return this
+   *   Return this for chaining.
+   */
+  public function setHeading($user_name) {
+    $this->variables['mail_header'] = t('From @user, !date_stamp', array(
+      '@user' => $user_name,
+      '!date_stamp' => format_date(time(), 'medium'),
+    ));
+
+    return $this;
+  }
+
+  /**
+   * Public function to set the title for the notification.
+   *
+   * @param string $title
+   *   The title to be set.
+   *
+   * @return this
+   *   Return this for chaining.
+   */
+  public function setTitle($title) {
+    $this->variables['title'] = check_plain($title);
+    return $this;
+  }
+
+  /**
+   * Public function to set the subject for the notification.
+   *
+   * @param string $subject
+   *   The subject to be set.
+   *
+   * @return this
+   *   Return this for chaining.
+   */
+  public function setSubject($subject) {
+    $this->subject = strip_tags($subject);
+    return $this;
+  }
+
+  /**
+   * Public function to set the body text of a notification.
+   *
+   * @param string $body
+   *   The body to be used in the notification.
+   *
+   * @return this
+   *   Return this for chaining.
+   *
+   * @throws \Exception
+   *   Throws an exception if called before all modules are loaded.
+   */
+  public function setBody($body) {
+    $vars = $this->variables;
+
+    // Initialize text before the body.
+    $vars['before'] = '';
+
+    // Append the body text to vars, theme them and set notification body.
+    $vars['body'] = check_markup($body);
+
+    // Allow other modules to alter the variables before theming it.
+    drupal_alter('openlucius_notifications', $vars);
+
+    $this->body = theme('openlucius_notifications_notification', array('vars' => $vars));
+
+    return $this;
+  }
+
+  /**
+   * Public function to set the read more button on a notification.
+   *
+   * @param string $path
+   *   A valid Drupal path.
+   * @param null $fragment
+   *   (optional) A comment id to be used in the link.
+   *
+   * @return this
+   *   Used for chaining.
+   */
+  public function setReadMore($path, $fragment = NULL) {
+    $options = array(
+      'absolute' => TRUE,
+      'attributes' => array(
+        'style' => array(
+          '
+          color: #333;
+          background-color: #fff;
+          border: 1px solid #dadada;
+          border-radius: 5px;
+          padding: 2px 10px;
+          font-size: 12px;
+          line-height: 1.5;
+          text-align: center;
+          white-space: nowrap;
+          vertical-align: middle;
+          display: inline-block;',
+        ),
+      ),
+    );
+
+    // Append fragment if comment id isset.
+    if (!is_null($fragment)) {
+      $options['fragment'] = $fragment;
+    }
+
+    // Set the read more value.
+    $this->variables['read_more'] = l(t('Read more'), $path, $options);
+
+    return $this;
+  }
+
+  /**
+   * Public function to set the targets for the notifications.
+   *
+   * @param array $targets
+   *   The targets to be notified.
+   *
+   * @return this
+   *   Return this for chaining.
+   */
+  public function setTargets(array $targets) {
+    $this->targets = $targets;
+    return $this;
+  }
+
+  /**
+   * Public function to send the notification(s).
+   *
+   * @throws \Exception
+   *   Throws exception if the MailSystemInterface was not implemented.
+   */
+  public function send() {
+    global $user;
+
+    // Initialize variables.
+    $amount_sent = $amount_failed = 0;
+
+    // Allows for one or more custom mail back-ends to format
+    // and send mail messages composed using drupal_mail().
+    $system = drupal_mail_system('openlucius_core', 'notification');
+
+    // Loop through users.
+    foreach ($this->targets as $u) {
+      $message = openlucius_notifications_html_message($u, $user, $this->subject, $this->body);
+
+      // If the email is sent.
+      if ($system->mail($message)) {
+
+        // Log message.
+        watchdog('openlucius_notification', 'Notification sent to: !user containing: <br /> !body', array(
+          '!user' => $u,
+          '!body' => $this->body,
+        ));
+        // Increase amount sent by one.
+        $amount_sent++;
+      }
+      else {
+        // Increase amount failed by one.
+        $amount_failed++;
+      }
+    }
+
+    // If there are emails sent.
+    if ($amount_sent > 0) {
+
+      // Set a notifications telling the user how many emails where sent.
+      drupal_set_message(t("!number notifications successfully sent.", array('!number' => $amount_sent)), 'status');
+    }
+    // If there are emails sent.
+    if ($amount_failed > 0) {
+
+      // Set a notifications telling the user how many emails where sent.
+      drupal_set_message(t("!number notifications NOT sent. Please contact your OpenLucius administrator", array('!number' => $amount_failed)), 'error');
+    }
+  }
+}
+
+/**
+ * Function for sending html mails for notifications.
+ *
+ * @param array $node
+ *   The node array object.
+ * @param bool|array $comment
+ *   Comment being TRUE or FALSE.
+ */
+function openlucius_notifications_notify_users($node, $comment = FALSE) {
+
+  // The logged in user.
+  global $user;
+
+  // Check if notifications are set.
+  if (isset($node->notify_individual) || isset($node->notify_team) || isset($comment['notify_individual'])) {
+
+    // Initiate array for users.
+    $users = array();
+
+    // Initialize new notification.
+    $notification = new openlucius_Notification();
+
+    // Get the meta wrapper.
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+
+    // Get the node body.
+    $body = $node_wrapper->body->value();
+
+    // Set heading.
+    $notification->setHeading($user->name);
+
+    // Set readmore.
+    $notification->setReadMore('node/' . $node->nid, 'comment-' . $node->cid);
+
+    // Set the body.
+    $body = (($comment != FALSE) ? check_markup($comment['value']) : check_markup($body['value']));
+    $notification->setBody($body);
+
+    // Fetch all users in group (use node as arg(3) may not be consistent).
+    $all_users = openlucius_core_fetch_users('group', $node_wrapper->field_shared_group_reference->value()->nid);
+
+    // Get individuals.
+    $individuals = isset($node->notify_individual) ? $node->notify_individual : $comment['notify_individual'];
+
+    // Loop through users.
+    foreach ($individuals as $value) {
+
+      // All unset users have 0.
+      if ($value !== 0) {
+        $users[] = $all_users[$value]->mail;
+      }
+    }
+
+    // Set the people to be notified.
+    $notification->setTargets($users);
+
+    // Create the subject line based on whether it's a comment or a node.
+    $subject = ($comment != FALSE) ? t('[OpenLucius] New comment') : t('[OpenLucius] New !type', array('!type' => node_type_get_name($node)));
+
+    // Add a colon and the node title afterwards.
+    $subject .= ': ' . $node->title;
+    $notification->setSubject($subject);
+
+    // Send the notifications.
+    $notification->send();
+  }
+}
+
+/**
+ * Function to send the loop-in emails from node/add's and comments.
+ *
+ * @param array[] $emails
+ *   The email addresses supplied to send the mail to.
+ *
+ * @param string $comment
+ *   The comment that has to be emailed to these addresses.
+ *
+ * @param \stdClass|NULL $node
+ *   The node to be used for the loopin mails.
+ */
+function openlucius_notifications_send_loopin_mails($emails, $comment, $node = NULL) {
+
+  // If we come across a node that has no loop-in field, return.
+  if ($node && empty($node->field_shared_loopin_email)) {
+    return;
+  }
+
+  // The logged in user.
+  global $user;
+
+  // Initialize new notification.
+  $notification = new openlucius_Notification();
+
+  // If the node is not empty.
+  if (!empty($node)) {
+
+    // User is sending from a node/add.
+    // Get body and loop-in emails via meta wrapper.
+    $node_wrapper = entity_metadata_wrapper('node', $node);
+
+    // Build the body.
+    $body_value = $node_wrapper->body->value();
+    $body = $body_value['value'];
+
+    // Build the subject.
+    $subject = $node_wrapper->title->value();
+
+    // Build the 'loop-in' emails.
+    $emails = $node_wrapper->field_shared_loopin_email->value();
+  }
+  else {
+    // User is sending loop-in, from comment.
+    $body = $comment;
+
+    // Build email subject (first paragraph of body / comment).
+    preg_match('%(<p[^>]*>.*?</p>)%i', $body, $matches);
+    // Set the subject.
+    $subject = $matches[0];
+  }
+
+  // Set heading, title and body.
+  $notification->setHeading($user->mail);
+  $notification->setTitle($subject);
+  $notification->setBody($body);
+  $notification->setTargets($emails);
+
+  // Send emails.
+  $notification->send();
+}
+
+/**
+ * Function to build html email.
+ *
+ * @param string $receiver
+ *   The email of the receiver.
+ * @param string $sender
+ *   The email of the sender.
+ * @param string $subject
+ *   The email subject.
+ * @param string $body
+ *   The email body.
+ * @param string $reply_to
+ *   (optional) reply_to address.
+ *
+ * @return array
+ *   Returns an array of the message.
+ */
+function openlucius_notifications_html_message($receiver, $sender, $subject, $body, $reply_to = NULL) {
+  // Initialize username as 'openlucius'.
+  $user_name = 'openlucius';
+
+  // Fetch username for email prefix.
+  if (isset($sender->name)) {
+
+    // Set the username.
+    $user_name = check_plain($sender->name);
+    // If the user has a realname.
+    if (isset($sender->realname) && !empty($sender->realname)) {
+      // Use the realname.
+      $user_name = check_plain($sender->realname);
+    }
+  }
+
+  // Build server default email.
+  if (is_null($reply_to)) {
+    $reply_to = 'mail@' . $_SERVER['SERVER_NAME'];
+  }
+
+  $base = array(
+    'to' => '"' . addslashes(mime_header_encode($receiver)) . '"<' . $receiver . '>',
+    'subject' => $subject,
+    'body' => $body,
+    'headers' => array(
+      'From' => '"' . addslashes(mime_header_encode($user_name)) . '"<' . $reply_to . '>',
+      'MIME-Version' => '1.0',
+      'Content-Type' => 'text/html;charset=utf-8',
+      // Return-Path is the from address.
+      'Return-Path' => $reply_to,
+      'Reply-To' => $reply_to,
+    ),
+  );
+
+  // Return.
+  return $base;
+}
+
+/**
+ * Form constructor for the notification settings form.
+ * @ingroup forms.
+ */
+function openlucius_notifications_configuration_form($form, &$form_state) {
+
+  // Start the form array.
+  $form = array();
+
+  // The groups as fieldset.
+  $form['openlucius_notifications_amount'] = array(
+    '#title' => t('Show this many'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('openlucius_notifications_amount', 5),
+  );
+
+  // Return save settings.
+  return system_settings_form($form);
+}
+
+/**
+ * Function for keeping track of who has been notified.
+ *
+ * @param array $object
+ *   The node or comment object.
+ * @param string $type
+ *   Whether this is a node or a comment.
+ */
+function openlucius_notifications_register_notification($object, $type) {
+
+  switch ($type) {
+    case 'node':
+      $id = $object->nid;
+      break;
+
+    case 'comment':
+      $id = $object->cid;
+      break;
+
+    default:
+  }
+	
+if(isset($object->notify_individual)) {	
+  // Loop through the people being notified.
+  
+  foreach ($object->notify_individual as $uid => $value) {
+    if ($value !== 0) {
+      $array[$uid] = openlucius_notifications_get_email_from_uid($uid);
+    }
+  }
+}
+  // Register the notifications if there are any.
+  if (!empty($array)) {
+
+    // Do a db select on openlucius_notifications to get the id.
+    $exists = db_select('openlucius_notifications', 'n')
+      ->fields('n', array('users'))
+      ->condition('id', $id, '=')
+      ->condition('type', $type, '=')
+      ->execute()->fetchField();
+
+    // Check if the entity does not yet exist.
+    if (empty($exists)) {
+      // Create a new entry in the database.
+      db_insert('openlucius_notifications')
+        ->fields(array(
+          'id' => $id,
+          'type' => $type,
+          'users' => serialize($array),
+        ))
+        ->execute();
+    }
+    else {
+      // Unserialize the old array.
+      $existing_array = unserialize($exists);
+
+      // Merge old and new.
+      $new = array_merge($existing_array, $array);
+
+      // Prevent doubles.
+      $new = array_unique($new);
+
+      db_update('openlucius_notifications')
+        ->fields(array('users' => serialize($new)))
+        ->condition('id', $id, '=')
+        ->condition('type', $type, '=')
+        ->execute();
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function openlucius_notifications_preprocess_node(&$variables) {
+
+  // Node id shall always be set.
+  if (isset($variables['nid'])) {
+
+    // Get the notified users for the node.
+    $users = openlucius_notifications_get_notified_users($variables['nid']);
+
+    // Check if there are users.
+    if (!empty($users)) {
+      //$variables['content'];
+
+      // Append the breakdown button.
+      $variables['content'] = openlucius_core_array_insert_after(
+        $variables['content'],
+        'field_shared_show_clients',
+        array(
+          'sent_notifications' => array(
+            '#weight' => 6,
+            0 => array(
+              '#markup' => openlucius_notifications_build_data($users),
+            ),
+          ),
+        )
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_comment().
+ */
+function openlucius_notifications_preprocess_comment(&$variables) {
+
+  // Check the comment id.
+  if (isset($variables['comment']->cid)) {
+
+    // Get the notified users for the comment.
+    $users = openlucius_notifications_get_notified_users($variables['comment']->cid);
+
+    // Check if there are users.
+    if (!empty($users)) {
+      $variables['sent_notifications'] = openlucius_notifications_build_data($users);
+    }
+  }
+}
+
+/**
+ * Custom function to query the database for the notified users.
+ *
+ * @param int $id
+ *   Either the node id or the comment id.
+ *
+ * @return string|bool
+ *   Returns the serialized data or FALSE.
+ */
+function openlucius_notifications_get_notified_users($id) {
+
+  // Query the openlucius_notifications table to get the users for this id.
+  $users = db_select('openlucius_notifications', 'n')
+    ->fields('n', array('users'))
+    ->condition('id', $id, '=')
+    ->execute()->fetchField();
+
+  // Return the serialized data.
+  return isset($users) ? $users : FALSE;
+}
+
+/**
+ * Custom function to build the data for the 'who has been notified text'.
+ *
+ * $param string $users
+ *   The serialized users object.
+ *
+ * @return mixed
+ *   Returns the themed output.
+ */
+function openlucius_notifications_build_data($users) {
+
+  // Unserialize the users to get an array.
+  $users = unserialize($users);
+
+  // Check if the array is not empty.
+  if (isset($users) && !empty($users)) {
+
+    // Get the amount to show.
+    $amount = variable_get('openlucius_notifications_amount', 5);
+
+    // Use this to build content.
+    $content = array();
+
+    // Slice the first x items.
+    $first_array = array_slice($users, 0, $amount);
+
+    // Create a variable for the template.
+    $content['first'] = isset($first_array) ? implode(', ', $first_array) : '';
+
+    // Slice the last x items.
+    $last_array = array_slice($users, $amount);
+
+    // Create a variable for the template.
+    $content['last'] = isset($last_array) ? ', ' . implode(', ', $last_array) : '';
+
+    // Add the last part if there are more users than need to be shown.
+    if (count($users) > $amount) {
+      $content['more_button'] = '<a class="show-more">' . t('Show more') . '</a>';
+      $content['less_button'] = '<a class="show-less">' . t('Show less') . '</a>';
+    }
+
+    // Create a themed variable for the sent notifications.
+    $data = theme('openlucius_notifications_sent', array('vars' => $content));
+
+    return $data;
+  }
+}
+
+/**
+ * Function to get the email for the user.
+ *
+ * @param int $uid
+ *   The user id to get the email from.
+ *
+ * @return string
+ *   Returns the user email.
+ */
+function openlucius_notifications_get_email_from_uid($uid) {
+  // Query the users table to get the email.
+  return db_select('users', 'u')
+    ->fields('u', array('mail'))
+    ->condition('uid', $uid, '=')
+    ->execute()->fetchField();
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function openlucius_notifications_node_insert($node) {
+  openlucius_notifications_register_notification($node, 'node');
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function openlucius_notifications_node_update($node) {
+  openlucius_notifications_register_notification($node, 'node');
+}
+
+/**
+ * Implements hook_comment_insert().
+ */
+function openlucius_notifications_comment_insert($comment) {
+  openlucius_notifications_register_notification($comment, 'comment');
+}
+
+/**
+ * Implements hook_comment_update().
+ */
+function openlucius_notifications_comment_update($comment) {
+  openlucius_notifications_register_notification($comment, 'comment');
+}

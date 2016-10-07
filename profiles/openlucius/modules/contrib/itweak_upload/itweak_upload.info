@@ -1,0 +1,20 @@
+name = iTweak Upload
+description = Tweak file upload form.
+dependencies[] = file
+dependencies[] = image
+package = Site Tweaks
+core = 7.x
+
+stylesheets[all][] = itweak_upload.css
+files[] = itweak_upload.module
+files[] = itweak_upload.install
+
+
+
+
+; Information added by drupal.org packaging script on 2013-09-30
+version = "7.x-3.x-dev"
+core = "7.x"
+project = "itweak_upload"
+datestamp = "1380583705"
+
